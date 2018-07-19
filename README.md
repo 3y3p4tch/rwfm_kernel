@@ -4,6 +4,7 @@
   Run following commands from the machine you want to protect.
 
   #git clone https://github.com/parjanya-vyas/secureOS_kernel
+  
   #cd secureOS_kernel/client/
   
   Configure rwfmd.cfg to use user Rules engine and run install script -
