@@ -1,0 +1,51 @@
+
+* Setting up RWFM rules engine.
+
+Make sure you have following package installed on your system.
+    python3
+    sqlite3
+    python-virtualenv
+    python3-pip
+    libcurl4-gnutls-dev
+    librtmp-dev
+    pycurl
+
+Run following commands to get your app running.
+
+  git clone https://bitbucket.org/atawre/secureos/
+  cd secureos
+  virtualenv env
+  source env/bin/activate
+  pip install django djangorestframework django-polymorphic
+  cd webapp
+  rm -f db.sqlite3
+  rm -fr rwfm/migrations/
+  python manage.py makemigrations rwfm
+  python manage.py migrate
+  python manage.py runserver 0.0.0.0:8000
+
+
+* Installing client.
+
+  Run following commands from the machine you want to protect.
+
+  #git clone https://bitbucket.org/atawre/secureos/
+  #cd secureos/client/
+  
+  Configure rwfmd.cfg to use user Rules engine and run install script -
+
+  #./install.sh
+
+  Once installation is done, run secure shell as  
+ 
+  #/opt/secos/bin/secure_shell
+
+  Enable rwfm as follows - 
+
+  #rwfm enable
+
+  You can see the rwfmd daemon log @  /var/log/rwfmd.log
+
+Run your test program.
+
+
