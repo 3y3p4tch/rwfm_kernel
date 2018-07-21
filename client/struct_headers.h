@@ -20,9 +20,9 @@ typedef struct object_id {
 
 typedef struct object {
     OBJECT_ID * obj_id;
-    int owner;
-    LABEL_SET readers;
-    LABEL_SET writers;
+    int owner;//index of the user id in ALL_UID array
+    LABEL_SET readers;//the bits in places where uid are present from ALL_UID are 1
+    LABEL_SET writers;//the bits in places where uid are present from ALL_UID are 1
 } OBJECT;
 
 typedef struct subject_id {
