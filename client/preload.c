@@ -12,6 +12,7 @@
 //#include <fcntl.h>
 #include "preload.h"
 #include "socket.h"
+#include "struct_headers.h"
 
 #define TRUE 1
 #define FALSE 0
@@ -469,6 +470,7 @@ int open64(const char *pathname, int flags, mode_t mode) {
 }
 
 int open(const char *pathname, int flags) {
+/*    
     struct stat sb;
     char buf[1024];
     int exists=0;
@@ -513,6 +515,8 @@ int open(const char *pathname, int flags) {
             return -1;
     }
     return ret;
+*/
+
 }
 
 int openat(int dirfd, const char *pathname, int flags){
