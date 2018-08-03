@@ -12,7 +12,6 @@
 //#include <fcntl.h>
 #include "preload.h"
 #include "socket.h"
-#include "struct_headers.h"
 
 #define TRUE 1
 #define FALSE 0
@@ -401,7 +400,7 @@ void myexit(int status) {
     }
     (*underlying)(status);
 }
-
+/*
 int close(int fd) {
     char buf[50];
     void (*underlying)(int) = 0;
@@ -422,7 +421,7 @@ int close(int fd) {
         close_ref_count++;
     }
 }
-
+*/
 int open64(const char *pathname, int flags, mode_t mode) {
     struct stat sb;
     char buf[1024];
