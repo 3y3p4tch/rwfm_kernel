@@ -21,11 +21,14 @@ int write_request(char *req) {
     return ret;
 }
 
-void add_host(char *host) {
-    char request[MAX_REQUEST_LENGTH];
+int add_host(char *host) {
+    char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
     sprintf(request, "%d ", ADD_HOST_OP);
     strcat(request, host);
     write_request(request);
+    read_response(response);
+
+    return strtol(response, NULL, 10);
 }
 
 int get_host_index(char *host) {
@@ -38,10 +41,13 @@ int get_host_index(char *host) {
     return strtol(response, NULL, 10);
 }
 
-void add_user_id(int host_id_index, int uid) {
-    char request[MAX_REQUEST_LENGTH];
+int add_user_id(int host_id_index, int uid) {
+    char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
     sprintf(request, "%d %d %d", ADD_USER_ID_OP, host_id_index, uid);
     write_request(request);
+    read_response(response);
+
+    return strtol(response, NULL, 10);
 }
 
 int get_user_id_index(int host_id_index, int uid) {
@@ -53,10 +59,13 @@ int get_user_id_index(int host_id_index, int uid) {
     return strtol(response, NULL, 10);
 }
 
-void add_group_id(int host_id_index, int gid) {
-    char request[MAX_REQUEST_LENGTH];
+int add_group_id(int host_id_index, int gid) {
+    char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
     sprintf(request, "%d %d %d", ADD_GROUP_ID_OP, host_id_index, gid);
     write_request(request);
+    read_response(response);
+
+    return strtol(response, NULL, 10);
 }
 
 int get_group_id_index(int host_id_index, int gid) {
@@ -68,10 +77,13 @@ int get_group_id_index(int host_id_index, int gid) {
     return strtol(response, NULL, 10);
 }
 
-void add_object_id(int host_id_index, int device_id, int inode_num) {
-    char request[MAX_REQUEST_LENGTH];
+int add_object_id(int host_id_index, int device_id, int inode_num) {
+    char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
     sprintf(request, "%d %d %d %d", ADD_OBJECT_ID_OP, host_id_index, device_id, inode_num);
     write_request(request);
+    read_response(response);
+
+    return strtol(response, NULL, 10);
 }
 
 int get_object_id_index(int host_id_index, int device_id, int inode_num) {
@@ -83,10 +95,13 @@ int get_object_id_index(int host_id_index, int device_id, int inode_num) {
     return strtol(response, NULL, 10);
 }
 
-void add_subject_id(int host_id_index, int uid, int pid) {
-    char request[MAX_REQUEST_LENGTH];
+int add_subject_id(int host_id_index, int uid, int pid) {
+    char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
     sprintf(request, "%d %d %d %d", ADD_SUBJECT_ID_OP, host_id_index, uid, pid);
     write_request(request);
+    read_response(response);
+
+    return strtol(response, NULL, 10);
 }
 
 int get_subject_id_index(int host_id_index, int uid, int pid) {
@@ -98,10 +113,13 @@ int get_subject_id_index(int host_id_index, int uid, int pid) {
     return strtol(response, NULL, 10);
 }
 
-void add_object(int obj_id_index, int owner, unsigned long long readers, unsigned long long writers) {
-    char request[MAX_REQUEST_LENGTH];
+int add_object(int obj_id_index, int owner, unsigned long long readers, unsigned long long writers) {
+    char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
     sprintf(request, "%d %d %d %llu %llu", ADD_OBJECT_OP, obj_id_index, owner, readers, writers);
     write_request(request);
+    read_response(response);
+
+    return strtol(response, NULL, 10);
 }
 
 int get_object_index(int obj_id_index, int owner, unsigned long long readers, unsigned long long writers) {
@@ -113,16 +131,22 @@ int get_object_index(int obj_id_index, int owner, unsigned long long readers, un
     return strtol(response, NULL, 10);
 }
 
-void update_object_label(int obj_index, unsigned long long readers, unsigned long long writers) {
-    char request[MAX_REQUEST_LENGTH];
+int update_object_label(int obj_index, unsigned long long readers, unsigned long long writers) {
+    char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
     sprintf(request, "%d %d %llu %llu", UPDATE_OBJECT_LABEL_OP, obj_index, readers, writers);
     write_request(request);
+    read_response(response);
+
+    return strtol(response, NULL, 10);
 }
 
-void add_subject(int sub_id_index, int owner, unsigned long long readers, unsigned long long writers) {
-    char request[MAX_REQUEST_LENGTH];
+int add_subject(int sub_id_index, int owner, unsigned long long readers, unsigned long long writers) {
+    char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
     sprintf(request, "%d %d %d %llu %llu", ADD_SUBJECT_OP, sub_id_index, owner, readers, writers);
     write_request(request);
+    read_response(response);
+
+    return strtol(response, NULL, 10);
 }
 
 int get_subject_index(int sub_id_index, int owner, unsigned long long readers, unsigned long long writers) {
@@ -134,16 +158,22 @@ int get_subject_index(int sub_id_index, int owner, unsigned long long readers, u
     return strtol(response, NULL, 10);
 }
 
-void update_subject_label(int sub_index, unsigned long long readers, unsigned long long writers) {
-    char request[MAX_REQUEST_LENGTH];
+int update_subject_label(int sub_index, unsigned long long readers, unsigned long long writers) {
+    char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
     sprintf(request, "%d %d %llu %llu", UPDATE_SUBJECT_LABEL_OP, sub_index, readers, writers);
     write_request(request);
+    read_response(response);
+
+    return strtol(response, NULL, 10);
 }
 
-void add_fd_mapping(int sub_id_index, int obj_id_index, int fd) {
-    char request[MAX_REQUEST_LENGTH];
+int add_fd_mapping(int sub_id_index, int obj_id_index, int fd) {
+    char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
     sprintf(request, "%d %d %d %d", ADD_NEW_FD_MAPPING_OP, sub_id_index, obj_id_index, fd);
     write_request(request);
+    read_response(response);
+
+    return strtol(response, NULL, 10);
 }
 
 int get_obj_id_index_from_fd_map(int sub_id_index, int fd) {

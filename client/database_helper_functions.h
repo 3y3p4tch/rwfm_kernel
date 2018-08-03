@@ -185,9 +185,11 @@ int get_object_from_obj_id_index(int obj_id_index) {
     return -1;
 }
 
-void update_object_label(int obj_index, LABEL_SET readers, LABEL_SET writers) {
+int update_object_label(int obj_index, LABEL_SET readers, LABEL_SET writers) {
     all_objects[obj_index].readers = readers;
     all_objects[obj_index].writers = writers;
+
+    return 0;
 }
 
 extern int num_subjects;
@@ -221,9 +223,11 @@ int get_subject_from_sub_id_index(int sub_id_index) {
     return -1;
 }
 
-void update_subject_label(int sub_index, LABEL_SET readers, LABEL_SET writers) {
+int update_subject_label(int sub_index, LABEL_SET readers, LABEL_SET writers) {
     all_subjects[sub_index].readers = readers;
     all_subjects[sub_index].writers = writers;
+
+    return 0;
 }
 
 extern int num_fd_maps;

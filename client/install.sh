@@ -12,7 +12,7 @@ update_users(){
 #        data="{ \"hostid\" : \"${HOSTNAME}\", \"uid\" : \"${i}\" }"
         #echo $data
 #        curl -H "Content-type: application/json" -X POST -d "$data" "$user_url" && echo "${i} : user added" || echo "${i} : user add failed"
-        `./add_users_and_groups '${ADD_USER}' '${HOSTNAME}' '${i}'`
+        ./add_users_and_groups ${ADD_USER} ${HOSTNAME} ${i}
     done
 }
 
