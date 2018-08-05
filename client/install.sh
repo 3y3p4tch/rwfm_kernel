@@ -7,10 +7,10 @@ export ADD_USER=0
 export ADD_GROUP=1
 
 update_users(){
-    for i in `cat /etc/passwd | awk -F: '{print $3}'`
+    for i in `perl -T -w list_users_and_groups.pl ${ADD_USER}`
     do
-#        data="{ \"hostid\" : \"${HOSTNAME}\", \"uid\" : \"${i}\" }"
-        #echo $data
+        data="{ \"hostid\" : \"${HOSTNAME}\", \"uid\" : \"${i}\" }"
+        echo $data
 #        curl -H "Content-type: application/json" -X POST -d "$data" "$user_url" && echo "${i} : user added" || echo "${i} : user add failed"
         ./add_users_and_groups ${ADD_USER} ${HOSTNAME} ${i}
     done
@@ -24,7 +24,7 @@ update_groups(){
         do
             if [[ $members ]]
             then
-                members="$members, "`id -u $u`
+                members="$members "`id -u $u`
             else
                 members=`id -u $u`
             fi
@@ -35,10 +35,10 @@ update_groups(){
             members=`grep -w $g /etc/passwd | awk -F: '{print $3}'`
         fi
 
-        #data="{ \"hostid\" : \"${HOSTNAME}\", \"gid\" : \"${g}\", \"members\" : \"${members}\" }"
-        #echo $data
+        data="{ \"hostid\" : \"${HOSTNAME}\", \"gid\" : \"${g}\", \"members\" : \"${members}\" }"
+        echo $data
         #curl -H "Content-type: application/json" -X POST -d "$data" "$group_url" && echo "${i} : group added" || echo "${i} : group add failed"
-        ./add_users_and_groups ${ADD_GROUP} ${HOSTNAME} ${g}
+        ./add_users_and_groups ${ADD_GROUP} ${HOSTNAME} ${g} ${members}
     done
 }
 
@@ -90,22 +90,24 @@ echo "database server started"
 #}
 #echo "daemon started"
 
-update_users || {
-        echo "failed to update users in webapp."
-        exit 1
-}
+perl -w list_users_and_groups.pl ${HOSTNAME}
 
-echo
-echo "users added"
-echo
+#update_users || {
+#        echo "failed to update users in webapp."
+#        exit 1
+#}
 
-update_groups || {
-        echo "failed to update groups in webapp."
-        exit 1
-}
+#echo
+#echo "users added"
+#echo
 
-echo
-echo "groups added"
-echo
+#update_groups || {
+#        echo "failed to update groups in webapp."
+#        exit 1
+#}
+
+#echo
+#echo "groups added"
+#echo
 
 exit 0

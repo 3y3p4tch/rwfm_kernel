@@ -59,22 +59,31 @@ int get_user_id_index(int host_id_index, int uid) {
     return strtol(response, NULL, 10);
 }
 
-int add_group_id(int host_id_index, int gid) {
+int add_group_id(int host_id_index, int gid, unsigned long long int member_set) {
     char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
-    sprintf(request, "%d %d %d", ADD_GROUP_ID_OP, host_id_index, gid);
+    sprintf(request, "%d %d %d %llu", ADD_GROUP_ID_OP, host_id_index, gid, member_set);
     write_request(request);
     read_response(response);
 
     return strtol(response, NULL, 10);
 }
 
-int get_group_id_index(int host_id_index, int gid) {
+int get_group_id_index(int host_id_index, int gid, unsigned long long int members) {
     char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
-    sprintf(request, "%d %d %d", GET_GROUP_ID_INDEX_OP, host_id_index, gid);
+    sprintf(request, "%d %d %d %llu", GET_GROUP_ID_INDEX_OP, host_id_index, gid, members);
     write_request(request);
     read_response(response);
 
     return strtol(response, NULL, 10);
+}
+
+unsigned long long int get_members_from_group_id(int group_id_index) {
+    char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
+    sprintf(request, "%d %d", GET_MEMBERS_FROM_GROUP_ID_OP, group_id_index);
+    write_request(request);
+    read_response(response);
+
+    return strtoull(response, NULL, 10);
 }
 
 int add_object_id(int host_id_index, int device_id, int inode_num) {

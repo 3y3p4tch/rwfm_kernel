@@ -77,6 +77,7 @@ int add_group_id(GROUP_ID new_group_id) {
     all_group_ids = (GROUP_ID *)realloc(all_group_ids, (num_group_ids+1) * sizeof(GROUP_ID));
     all_group_ids[num_group_ids].host_id_index = new_group_id.host_id_index;
     all_group_ids[num_group_ids].gid = new_group_id.gid;
+    all_group_ids[num_group_ids].members = new_group_id.members;
 
     return num_group_ids++;
 }
@@ -88,6 +89,10 @@ int get_group_id_index(GROUP_ID group_id) {
     }
 
     return -1;
+}
+
+USER_SET get_members_from_group_id(int group_id_index) {
+    return all_group_ids[group_id_index].members;
 }
 
 extern int num_object_ids;
@@ -185,7 +190,7 @@ int get_object_from_obj_id_index(int obj_id_index) {
     return -1;
 }
 
-int update_object_label(int obj_index, LABEL_SET readers, LABEL_SET writers) {
+int update_object_label(int obj_index, USER_SET readers, USER_SET writers) {
     all_objects[obj_index].readers = readers;
     all_objects[obj_index].writers = writers;
 
@@ -223,7 +228,7 @@ int get_subject_from_sub_id_index(int sub_id_index) {
     return -1;
 }
 
-int update_subject_label(int sub_index, LABEL_SET readers, LABEL_SET writers) {
+int update_subject_label(int sub_index, USER_SET readers, USER_SET writers) {
     all_subjects[sub_index].readers = readers;
     all_subjects[sub_index].writers = writers;
 
