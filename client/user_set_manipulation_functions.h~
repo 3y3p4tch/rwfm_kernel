@@ -1,4 +1,5 @@
 #include "database_model.h"
+#include <sys/stat.h>
 
 int add_user_to_label(int user_to_add, USER_SET * label) {
     unsigned long long int max = -1;

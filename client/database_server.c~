@@ -106,14 +106,6 @@ int do_operation(int operation, char **req_args, int num_args) {
             write_response(response);
             break;
         }
-        case GET_NUMBER_OF_USERS_OP:
-        {
-            if(num_args != 1)
-                return -1;
-            sprintf(response, "%d", get_number_of_users());
-            write_response(response);
-            break;
-        } 
         case ADD_GROUP_ID_OP:
         {
             if(num_args != 4)

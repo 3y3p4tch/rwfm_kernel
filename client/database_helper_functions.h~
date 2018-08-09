@@ -61,10 +61,6 @@ int get_user_id_index(USER_ID user_id) {
     return -1;
 }
 
-int get_number_of_users() {
-    return num_user_ids;
-}
-
 extern int num_group_ids;
 extern GROUP_ID * all_group_ids;
 
