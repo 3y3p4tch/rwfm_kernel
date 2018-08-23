@@ -1,8 +1,14 @@
 #include <sys/stat.h>
 #include "infer_object_labels.h"
 
-int fork_check(int child_pid, int parent_pid) {
-    //to be implemented
+int fork_check(char* host_name, int uid, int child_pid, int parent_pid) {
+    int host_id_index = get_host_index(host_name);
+    int parent_sub_id_index = get_subject_id(host_id_index, uid, parent_pid);
+    SUBJECT parent_subject = get_subject(parent_sub_id_index);
+
+    int child_sub_id_index = add_subject_id(host_id_index, uid, child_pid);
+    int child_subject = add_subject(child_sub_id_index, parent_subject.owner, parent_subject.readers, parent_subject.writers);
+    copy_subject_info(parent_sub_id_index, child_sub_id_index);
 }
 
 int open_check(char * host_name, struct stat * file_info, int fd, int uid, int pid){

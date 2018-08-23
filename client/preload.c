@@ -12,7 +12,7 @@ void debuglog(char *log) {
 }
 
 pid_t fork(void) {
-    //to be implemented
+    
 }
 
 int open(const char *path, int flags) {

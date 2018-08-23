@@ -8,6 +8,19 @@
 #define	O_WRONLY	0x0001		/* open for writing only */
 #define	O_RDWR		0x0002		/* open for reading and writing */
 
+//Converting space seperated request string into arguments array
+int get_args_from_request(char **args, char *req) {
+    memset(args, '\0', sizeof(char*) * MAX_REQUEST_LENGTH);
+    char *curToken = strtok(req, " ");
+    int i;
+    for (i = 0; curToken != NULL; i++) {
+      args[i] = strdup(curToken);
+      curToken = strtok(NULL, " ");
+    }
+
+    return i;
+}
+
 int read_response(char *res) {
     int read_fifo_fd = underlying_open(RESPONSE_FIFO_PATH, O_RDONLY);
     int ret = underlying_read(read_fifo_fd, res, MAX_REQUEST_LENGTH);
@@ -114,6 +127,39 @@ int get_object_id_index(int host_id_index, int device_id, int inode_num) {
     return strtol(response, NULL, 10);
 }
 
+int add_object(int obj_id_index, int owner, unsigned long long readers, unsigned long long writers) {
+    char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
+    sprintf(request, "%d %d %d %llu %llu", ADD_OBJECT_OP, obj_id_index, owner, readers, writers);
+    write_request(request);
+    read_response(response);
+
+    return strtol(response, NULL, 10);
+}
+
+OBJECT get_object(int obj_id_index) {
+    char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
+    sprintf(request, "%d %d", GET_OBJECT_INDEX_OP, obj_id_index);
+    write_request(request);
+    read_response(response);
+    char **arguments = (char**)malloc(MAX_REQUEST_LENGTH * sizeof(char*));
+    get_args_from_request(arguments, response);
+    OBJECT object;
+    object.owner = strtoul(arguments[0], NULL, 10);
+    object.readers = strtoull(arguments[1], NULL, 10);
+    object.writers = strtoull(arguments[2], NULL, 10);
+
+    return object;
+}
+
+int update_object_label(int obj_index, unsigned long long readers, unsigned long long writers) {
+    char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
+    sprintf(request, "%d %d %llu %llu", UPDATE_OBJECT_LABEL_OP, obj_index, readers, writers);
+    write_request(request);
+    read_response(response);
+
+    return strtol(response, NULL, 10);
+}
+
 int add_subject_id(int host_id_index, int uid, int pid) {
     char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
     sprintf(request, "%d %d %d %d", ADD_SUBJECT_ID_OP, host_id_index, uid, pid);
@@ -132,33 +178,6 @@ int get_subject_id_index(int host_id_index, int uid, int pid) {
     return strtol(response, NULL, 10);
 }
 
-int add_object(int obj_id_index, int owner, unsigned long long readers, unsigned long long writers) {
-    char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
-    sprintf(request, "%d %d %d %llu %llu", ADD_OBJECT_OP, obj_id_index, owner, readers, writers);
-    write_request(request);
-    read_response(response);
-
-    return strtol(response, NULL, 10);
-}
-
-int get_object_index(int obj_id_index, int owner, unsigned long long readers, unsigned long long writers) {
-    char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
-    sprintf(request, "%d %d %d %llu %llu", GET_OBJECT_INDEX_OP, obj_id_index, owner, readers, writers);
-    write_request(request);
-    read_response(response);
-
-    return strtol(response, NULL, 10);
-}
-
-int update_object_label(int obj_index, unsigned long long readers, unsigned long long writers) {
-    char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
-    sprintf(request, "%d %d %llu %llu", UPDATE_OBJECT_LABEL_OP, obj_index, readers, writers);
-    write_request(request);
-    read_response(response);
-
-    return strtol(response, NULL, 10);
-}
-
 int add_subject(int sub_id_index, int owner, unsigned long long readers, unsigned long long writers) {
     char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
     sprintf(request, "%d %d %d %llu %llu", ADD_SUBJECT_OP, sub_id_index, owner, readers, writers);
@@ -168,13 +187,19 @@ int add_subject(int sub_id_index, int owner, unsigned long long readers, unsigne
     return strtol(response, NULL, 10);
 }
 
-int get_subject_index(int sub_id_index, int owner, unsigned long long readers, unsigned long long writers) {
+SUBJECT get_subject(int sub_id_index) {
     char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
-    sprintf(request, "%d %d %d %llu %llu", GET_SUBJECT_INDEX_OP, sub_id_index, owner, readers, writers);
+    sprintf(request, "%d %d", GET_SUBJECT_INDEX_OP, sub_id_index);
     write_request(request);
     read_response(response);
+    char **arguments = (char**)malloc(MAX_REQUEST_LENGTH * sizeof(char*));
+    get_args_from_request(arguments, response);
+    SUBJECT subject;
+    subject.owner = strtoul(arguments[0], NULL, 10);
+    subject.readers = strtoull(arguments[1], NULL, 10);
+    subject.writers = strtoull(arguments[2], NULL, 10);
 
-    return strtol(response, NULL, 10);
+    return subject;
 }
 
 int update_subject_label(int sub_index, unsigned long long readers, unsigned long long writers) {

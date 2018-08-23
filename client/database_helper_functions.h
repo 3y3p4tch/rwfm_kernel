@@ -207,13 +207,13 @@ int add_object(OBJECT new_object) {
     return num_objects++;
 }
 
-int get_object_from_obj_id_index(int obj_id_index) {
+OBJECT get_object_from_obj_id_index(int obj_id_index) {
     for(int i=0;i<num_objects;i++) {
         if(all_objects[i].obj_id_index == obj_id_index)
-            return i;
+            return all_objects[i];
     }
 
-    return -1;
+    return NULL;
 }
 
 int update_object_label(int obj_index, USER_SET readers, USER_SET writers) {
@@ -245,13 +245,13 @@ int add_subject(SUBJECT new_subject) {
     return num_subjects++;
 }
 
-int get_subject_from_sub_id_index(int sub_id_index) {
+SUBJECT get_subject_from_sub_id_index(int sub_id_index) {
     for(int i=0;i<num_subjects;i++) {
         if(all_subjects[i].sub_id_index == sub_id_index)
-            return i;
+            return all_subjects[i];
     }
 
-    return -1;
+    return NULL;
 }
 
 int update_subject_label(int sub_index, USER_SET readers, USER_SET writers) {

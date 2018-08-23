@@ -51,6 +51,7 @@ int write_response(char *res) {
     return ret;
 }
 
+//Converting space seperated request string into arguments array
 int get_args_from_request(char **args, char *req) {
     memset(args, '\0', sizeof(char*) * MAX_REQUEST_LENGTH);
     char *curToken = strtok(req, " ");
@@ -207,12 +208,13 @@ int do_operation(int operation, char **req_args, int num_args) {
             write_response(response);
             break;
         }
-        case GET_OBJECT_INDEX_OP:
+        case GET_OBJECT_OP:
         {
             if(num_args != 2)
                 return -1;
             int obj_id_index = strtol(req_args[1], NULL, 10);
-            sprintf(response, "%d", get_object_from_obj_id_index(obj_id_index));
+            OBJECT obj = get_object_from_obj_id_index(obj_id_index);
+            sprintf(response, "%u %llu %llu",obj.owner,obj.readers,obj.writers);
             write_response(response);
             break;
         }
@@ -240,12 +242,13 @@ int do_operation(int operation, char **req_args, int num_args) {
             write_response(response);
             break;
         }
-        case GET_SUBJECT_INDEX_OP:
+        case GET_SUBJECT_OP:
         {
             if(num_args != 2)
                 return -1;
             int sub_id_index = strtol(req_args[1], NULL, 10);
-            sprintf(response, "%d", get_subject_from_sub_id_index(sub_id_index));
+            SUBJECT sub = get_subject_from_sub_id_index(sub_id_index);
+            sprintf(response, "%u %llu %llu",sub.owner,sub.readers,sub.writers);
             write_response(response);
             break;
         }
@@ -315,7 +318,7 @@ int start_server() {
         char request[MAX_REQUEST_LENGTH];
         read_request(request);
         printf("Received request:%s\n",request);
-        char **req_args = (char**)malloc(MAX_REQUEST_LENGTH * sizeof(char*));;
+        char **req_args = (char**)malloc(MAX_REQUEST_LENGTH * sizeof(char*));
         int num_args = get_args_from_request(req_args, request);
         int operation = strtol(req_args[0], NULL, 10);
         int ret = do_operation(operation, req_args, num_args);
