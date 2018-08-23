@@ -4,14 +4,23 @@
 #include <sys/stat.h>
 #include "infer_object_labels.h"
 
-int fork_check(char* host_name, int uid, int child_pid, int parent_pid) {
+void fork_check(char* host_name, int uid, int child_pid, int parent_pid) {
     int host_id_index = get_host_index(host_name);
     int parent_sub_id_index = get_subject_id_index(host_id_index, uid, parent_pid);
-    SUBJECT parent_subject = get_subject(parent_sub_id_index);
-
     int child_sub_id_index = add_subject_id(host_id_index, uid, child_pid);
-    int child_subject = add_subject(child_sub_id_index, parent_subject.owner, parent_subject.readers, parent_subject.writers);
-    copy_subject_info(parent_sub_id_index, child_sub_id_index);
+    if(parent_sub_id_index == -1) {
+        int owner = get_user_id_index(host_id_index, uid);
+        USER_SET readers = get_all_users(get_number_of_users());
+        USER_SET writers = 0;
+        add_user_to_label(owner, &writers);
+        add_subject(child_sub_id_index, owner, readers, writers);
+    }
+    else {
+        SUBJECT parent_subject = get_subject(parent_sub_id_index);
+        
+        int child_subject = add_subject(child_sub_id_index, parent_subject.owner, parent_subject.readers, parent_subject.writers);
+        copy_subject_info(parent_sub_id_index, child_sub_id_index);
+    }
 }
 
 int open_check(char * host_name, struct stat * file_info, int fd, int uid, int pid){
@@ -35,5 +44,7 @@ int open_check(char * host_name, struct stat * file_info, int fd, int uid, int p
 
     return 0;
 }
+
+
 
 #endif

@@ -12,7 +12,14 @@ void debuglog(char *log) {
 }
 
 pid_t fork(void) {
-    
+    pid_t pid = underlying_fork();
+    if(pid == 0) {
+        char host_name[1024];
+        sprintf(host_name, HOSTNAME);
+        fork_check(host_name, getuid(), getpid(), getppid());
+    }
+
+    return pid;
 }
 
 int open(const char *path, int flags) {

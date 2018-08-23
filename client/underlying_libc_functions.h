@@ -12,6 +12,14 @@ void *get_libc() {
     return libc_handle;
 }
 
+pid_t underlying_fork(void) {
+    static pid_t (*underlying)(void) = 0;
+    if (!underlying) {
+        underlying = dlsym(get_libc(), "fork");
+    }
+    return (*underlying)();
+}
+
 int underlying_open(const char *pathname, int flags) {
     static int (*underlying)(const char *pathname, int flags) = 0;
     if (!underlying) {

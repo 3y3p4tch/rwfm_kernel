@@ -321,9 +321,8 @@ int start_server() {
         char **req_args = (char**)malloc(MAX_REQUEST_LENGTH * sizeof(char*));
         int num_args = get_args_from_request(req_args, request);
         int operation = strtol(req_args[0], NULL, 10);
-        printf("\n%d\n", operation);
         int ret = do_operation(operation, req_args, num_args);
-        printf("Operation result:%d\n",ret);
+        printf("Operation result:%d\n\n",ret);
         if(ret!=0)
             return ret;
     }
