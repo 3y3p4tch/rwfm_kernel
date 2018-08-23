@@ -11,6 +11,10 @@ void debuglog(char *log) {
     close(logfd);
 }
 
+pid_t fork(void) {
+    //to be implemented
+}
+
 int open(const char *path, int flags) {
     int fd = underlying_open(path, flags);
     if(fd == -1) 
@@ -25,5 +29,3 @@ int open(const char *path, int flags) {
 
     open_check(host_name, &file_info, fd, getuid(), getpid());
 }
-
-

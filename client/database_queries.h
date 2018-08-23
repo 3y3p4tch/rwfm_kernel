@@ -212,3 +212,12 @@ int get_sub_id_index_from_fd_map(int obj_id_index, int fd) {
 
     return strtol(response, NULL, 10);
 }
+
+int copy_subject_info(int src_sub_id_index, int dstn_sub_id_index) {
+    char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
+    sprintf(request, "%d %d %d", COPY_SUBJECT_FDS_OP, src_sub_id_index, dstn_sub_id_index);
+    write_request(request);
+    read_response(response);
+
+    return strtol(response, NULL, 10);
+}

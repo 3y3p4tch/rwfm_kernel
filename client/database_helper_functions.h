@@ -1,15 +1,37 @@
+/*
+This file contains functions that maintain the entire database.
+The actual database resides in the 'database_server.c' file.
+All the extern variables declared here are instantiated in database_server.c.
+The functions declared here adds, deletes, modifies or fetches various information from the database.
+*/
+
 #include "database_model.h"
 #include <string.h>
 
 #define MAX_HOST_SIZE 1024
 
+/*
+Functions that are related to HOSTs in database.
+num_hosts is total number of hosts.
+all_hosts is an array containing all the host ids encountered till now.
+*/
 extern int num_hosts;
 extern HOST * all_hosts;
 
+/*
+Description :   Helper function to compare two hosts.
+Parameters  :   Two hosts that are being compared.
+Return Value:   zero if the hosts do not match, non zero otherwise.
+*/
 int match_hosts(HOST h1, HOST h2) {
     return !strcmp(h1, h2);
 }
 
+/*
+Description :   Add a new host to the database if it doesn't exist.
+Parameters  :   new host to be added
+Return Value:   index of 'new host' in the array.
+*/
 int add_host(HOST new_host) {
     for(int i=0;i<num_hosts;i++) {
         if(match_hosts(all_hosts[i], new_host))
@@ -278,4 +300,27 @@ int get_sub_id_index_from_obj_id_and_fd(uint obj_id_index, uint fd) {
     }
 
     return -1;
+}
+
+/*
+Description :   Copy all the information contained in source subject id to destination subject id.
+                The information include all the fds (file, pipe, socket, etc) opened by the source.
+Parameters  :   subject id index of source and destination subjects
+Return Value:   Always succeeds and returns 0.
+*/
+int copy_subject_info(uint src_sub_id_index, uint dstn_sub_id_index) {
+    int fd_maps_to_copy[1024], num_fd_maps_to_copy = 0;
+    for(int i=0;i<num_fd_maps;i++) {
+        if(fd_map[i].sub_id_index == src_sub_id_index)
+            fd_maps_to_copy[num_fd_maps_to_copy++] = i;
+    }
+    for(int i=0;i<num_fd_maps_to_copy;i++) {
+        FD_MAP new_map;
+        new_map.sub_id_index = dstn_sub_id_index;
+        new_map.obj_id_index = fd_map[fd_maps_to_copy[i]].obj_id_index;
+        new_map.fd = fd_map[fd_maps_to_copy[i]].fd;
+        add_new_mapping(new_map);
+    }
+
+    return 0;
 }

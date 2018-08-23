@@ -1,7 +1,8 @@
 #include <sys/stat.h>
 #include "infer_object_labels.h"
 
-int fork_check() {
+int fork_check(int child_pid, int parent_pid) {
+    //to be implemented
 }
 
 int open_check(char * host_name, struct stat * file_info, int fd, int uid, int pid){

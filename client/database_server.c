@@ -292,6 +292,16 @@ int do_operation(int operation, char **req_args, int num_args) {
             write_response(response);
             break;
         }
+        case COPY_SUBJECT_FDS_OP:
+        {
+            if(num_args != 3)
+                return -1;
+            int src_sub_id_index = strtol(req_args[1], NULL, 10);
+            int dstn_sub_id_index = strtol(req_args[2], NULL, 10);
+            sprintf(response, "%d", copy_subject_info(src_sub_id_index, dstn_sub_id_index));
+            write_response(response);
+            break;
+        }
         default:
             return -2;
     }
