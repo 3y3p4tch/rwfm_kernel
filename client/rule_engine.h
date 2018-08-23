@@ -1,9 +1,12 @@
+#ifndef _RULE_ENGINE_H_
+#define _RULE_ENGINE_H_
+
 #include <sys/stat.h>
 #include "infer_object_labels.h"
 
 int fork_check(char* host_name, int uid, int child_pid, int parent_pid) {
     int host_id_index = get_host_index(host_name);
-    int parent_sub_id_index = get_subject_id(host_id_index, uid, parent_pid);
+    int parent_sub_id_index = get_subject_id_index(host_id_index, uid, parent_pid);
     SUBJECT parent_subject = get_subject(parent_sub_id_index);
 
     int child_sub_id_index = add_subject_id(host_id_index, uid, child_pid);
@@ -32,3 +35,5 @@ int open_check(char * host_name, struct stat * file_info, int fd, int uid, int p
 
     return 0;
 }
+
+#endif

@@ -14,15 +14,12 @@ use strict; use warnings;
 
 $ENV{"PATH"} = "/usr/bin:/bin";
 
-#my $userorgroup = shift;
-#my $wantedgroup = shift;
 my $hostid = shift;
 
 my %groupmembers;
 my $usertext = `getent passwd`;
 
 my @users = $usertext =~ /^([a-zA-Z0-9_-]+):/gm;
-#my @users = $usertext =~ `cat /etc/passwd | awk -F: '{print \$3}'`;
 
 foreach my $userid (@users)
 {
@@ -38,19 +35,11 @@ foreach my $userid (@users)
     }
 }
 
-#if($wantedgroup)
-#{
-#    print_group_members($wantedgroup);
-#}
-#else
-#{
 foreach my $group (sort keys %groupmembers)
 {
     my $grpcmd = "./add_users_and_groups 1 $hostid $group ";
-    #print "Group ",$group," has the following members:\n";
     foreach my $member (sort keys %{$groupmembers{$group}})
     {
-        #print $member;
         $member =~ s/^ *//;
         $member =~ s/ *$//;
         $member =~ s/\n*$//;
@@ -60,15 +49,3 @@ foreach my $group (sort keys %groupmembers)
     $grpcmd .= "\n";
     `$grpcmd`;
 }
-#}
-
-#sub print_group_members
-#{
-#    my ($group) = @_;
-#    return unless $group;
-
-#    foreach my $member (sort keys %{$groupmembers{$group}})
-#    {
-#        print $member;
-#    }
-#}

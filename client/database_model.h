@@ -1,3 +1,6 @@
+#ifndef _DB_MODEL_
+#define _DB_MODEL_
+
 typedef unsigned long long int USER_SET;
 typedef char * HOST;
 typedef unsigned int uint;
@@ -44,3 +47,5 @@ typedef struct file_descriptor_map {
     uint obj_id_index;
     uint fd;
 } FD_MAP;
+
+#endif

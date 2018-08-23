@@ -1,3 +1,6 @@
+#ifndef _DB_MACROS_H_
+#define _DB_MACROS_H_
+
 #define REQUEST_FIFO_PATH "/tmp/request_fifo"
 #define RESPONSE_FIFO_PATH "/tmp/response_fifo"
 
@@ -26,3 +29,5 @@
 #define GET_OBJ_ID_FROM_FD_MAP_OP 19
 #define GET_SUB_ID_FROM_FD_MAP_OP 20
 #define COPY_SUBJECT_FDS_OP 21
+
+#endif

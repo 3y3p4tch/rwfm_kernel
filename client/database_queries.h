@@ -1,8 +1,12 @@
+#ifndef _DB_QUERIES_H_
+#define _DB_QUERIES_H_
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "underlying_libc_functions.h"
 #include "database_macros.h"
+#include "database_model.h"
 
 #define	O_RDONLY	0x0000		/* open for reading only */
 #define	O_WRONLY	0x0001		/* open for writing only */
@@ -138,7 +142,7 @@ int add_object(int obj_id_index, int owner, unsigned long long readers, unsigned
 
 OBJECT get_object(int obj_id_index) {
     char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
-    sprintf(request, "%d %d", GET_OBJECT_INDEX_OP, obj_id_index);
+    sprintf(request, "%d %d", GET_OBJECT_OP, obj_id_index);
     write_request(request);
     read_response(response);
     char **arguments = (char**)malloc(MAX_REQUEST_LENGTH * sizeof(char*));
@@ -189,7 +193,7 @@ int add_subject(int sub_id_index, int owner, unsigned long long readers, unsigne
 
 SUBJECT get_subject(int sub_id_index) {
     char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
-    sprintf(request, "%d %d", GET_SUBJECT_INDEX_OP, sub_id_index);
+    sprintf(request, "%d %d", GET_SUBJECT_OP, sub_id_index);
     write_request(request);
     read_response(response);
     char **arguments = (char**)malloc(MAX_REQUEST_LENGTH * sizeof(char*));
@@ -246,3 +250,5 @@ int copy_subject_info(int src_sub_id_index, int dstn_sub_id_index) {
 
     return strtol(response, NULL, 10);
 }
+
+#endif

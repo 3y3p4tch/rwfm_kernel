@@ -1,3 +1,6 @@
+#ifndef _UND_LIBC_FUN_H_
+#define _UND_LIBC_FUN_H_
+
 #include <dlfcn.h>
 #include "preload.h"
 
@@ -40,3 +43,5 @@ int underlying_close(int fd) {
     }
     return (*underlying)(fd);
 }
+
+#endif

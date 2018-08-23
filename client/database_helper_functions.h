@@ -4,6 +4,8 @@ The actual database resides in the 'database_server.c' file.
 All the extern variables declared here are instantiated in database_server.c.
 The functions declared here adds, deletes, modifies or fetches various information from the database.
 */
+#ifndef _DB_HELPER_FUNCTION_H_
+#define _DB_HELPER_FUNCTION_H_
 
 #include "database_model.h"
 #include <string.h>
@@ -207,13 +209,13 @@ int add_object(OBJECT new_object) {
     return num_objects++;
 }
 
-OBJECT get_object_from_obj_id_index(int obj_id_index) {
+int get_object_from_obj_id_index(int obj_id_index) {
     for(int i=0;i<num_objects;i++) {
         if(all_objects[i].obj_id_index == obj_id_index)
-            return all_objects[i];
+            return i;
     }
 
-    return NULL;
+    return -1;
 }
 
 int update_object_label(int obj_index, USER_SET readers, USER_SET writers) {
@@ -245,13 +247,13 @@ int add_subject(SUBJECT new_subject) {
     return num_subjects++;
 }
 
-SUBJECT get_subject_from_sub_id_index(int sub_id_index) {
+int get_subject_from_sub_id_index(int sub_id_index) {
     for(int i=0;i<num_subjects;i++) {
         if(all_subjects[i].sub_id_index == sub_id_index)
-            return all_subjects[i];
+            return i;
     }
 
-    return NULL;
+    return -1;
 }
 
 int update_subject_label(int sub_index, USER_SET readers, USER_SET writers) {
@@ -324,3 +326,5 @@ int copy_subject_info(uint src_sub_id_index, uint dstn_sub_id_index) {
 
     return 0;
 }
+
+#endif

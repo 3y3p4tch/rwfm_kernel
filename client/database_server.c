@@ -32,11 +32,6 @@ SUBJECT * all_subjects = NULL;
 int num_fd_maps = 0;
 FD_MAP * fd_map = NULL;
 
-void initialize_communication_channel() {
-    mkfifo(REQUEST_FIFO_PATH, 0666);
-    mkfifo(RESPONSE_FIFO_PATH, 0666);
-}
-
 int read_request(char *req) {
     int read_fifo_fd = open(REQUEST_FIFO_PATH, O_RDONLY);
     int ret = read(read_fifo_fd, req, MAX_REQUEST_LENGTH);
@@ -213,7 +208,10 @@ int do_operation(int operation, char **req_args, int num_args) {
             if(num_args != 2)
                 return -1;
             int obj_id_index = strtol(req_args[1], NULL, 10);
-            OBJECT obj = get_object_from_obj_id_index(obj_id_index);
+            int obj_index = get_object_from_obj_id_index(obj_id_index);
+            if(obj_index == -1)
+                return -2;
+            OBJECT obj = all_objects[obj_index];
             sprintf(response, "%u %llu %llu",obj.owner,obj.readers,obj.writers);
             write_response(response);
             break;
@@ -247,7 +245,10 @@ int do_operation(int operation, char **req_args, int num_args) {
             if(num_args != 2)
                 return -1;
             int sub_id_index = strtol(req_args[1], NULL, 10);
-            SUBJECT sub = get_subject_from_sub_id_index(sub_id_index);
+            int sub_index = get_subject_from_sub_id_index(sub_id_index);
+            if(sub_index == -1)
+                return -2;
+            SUBJECT sub = all_subjects[sub_index];
             sprintf(response, "%u %llu %llu",sub.owner,sub.readers,sub.writers);
             write_response(response);
             break;
@@ -313,7 +314,6 @@ int do_operation(int operation, char **req_args, int num_args) {
 }
 
 int start_server() {
-    initialize_communication_channel();
     while(1) {
         char request[MAX_REQUEST_LENGTH];
         read_request(request);
@@ -321,6 +321,7 @@ int start_server() {
         char **req_args = (char**)malloc(MAX_REQUEST_LENGTH * sizeof(char*));
         int num_args = get_args_from_request(req_args, request);
         int operation = strtol(req_args[0], NULL, 10);
+        printf("\n%d\n", operation);
         int ret = do_operation(operation, req_args, num_args);
         printf("Operation result:%d\n",ret);
         if(ret!=0)

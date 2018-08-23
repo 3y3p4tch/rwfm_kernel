@@ -6,13 +6,13 @@ HOSTNAME=`hostname`
 all: database_server.c add_users_and_groups.c preload.c
 	echo "#define LIBC \"${LIBC}\"" > preload.h
 	echo "#define HOSTNAME \"${HOSTNAME}\"" >> preload.h
-	gcc -std=c99 database_server.c -o database_server
-	gcc -std=c99 add_users_and_groups.c -o add_users_and_groups
-	gcc -std=c99 -rdynamic -shared -fPIC -o preload.so preload.c ${DL}
+	gcc database_server.c -o database_server
+	gcc add_users_and_groups.c -o add_users_and_groups
+	gcc -rdynamic -shared -fPIC -o preload.so preload.c ${DL}
 
 debug: database_server.c add_users_and_groups.c preload.c
 	echo "#define LIBC \"${LIBC}\"" > preload.h
 	echo "#define DEBUG" >> preload.h
-	gcc -std=c99 database_server.c -o database_server
-	gcc -std=c99 add_users_and_groups.c -o add_users_and_groups
-	gcc -std=c99 -rdynamic -shared -fPIC -o preload.so preload.c ${DL}
+	gcc database_server.c -o database_server
+	gcc add_users_and_groups.c -o add_users_and_groups
+	gcc -rdynamic -shared -fPIC -o preload.so preload.c ${DL}

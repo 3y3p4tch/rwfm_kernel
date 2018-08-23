@@ -1,3 +1,6 @@
+#ifndef _USER_SET_MANIPULATION_FUN_H_
+#define _USER_SET_MANIPULATION_FUN_H_
+
 #include "database_model.h"
 
 int add_user_to_label(int user_to_add, USER_SET * label) {
@@ -34,3 +37,4 @@ int is_user_in_set(int user_id_index, USER_SET * set) {
     return (*set) & tmp;
 }
 
+#endif

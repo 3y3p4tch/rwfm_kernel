@@ -1,3 +1,6 @@
+#ifndef _INFER_OBJECT_LABELS_H_
+#define _INFER_OBJECT_LABELS_H_
+
 #include "database_queries.h"
 #include "user_set_manipulation_functions.h"
 #include <sys/stat.h>
@@ -53,3 +56,5 @@ int infer_labels(OBJECT * object, struct stat * object_info, int host_id_index) 
 
     return 0;       
 }
+
+#endif

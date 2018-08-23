@@ -81,6 +81,11 @@ chmod +x /opt/secos/bin/*
 
 export PATH=$PATH:/opt/secos/bin/
 
+mkfifo /tmp/request_fifo
+mkfifo /tmp/response_fifo
+
+chmod 777 /tmp/request_fifo /tmp/response_fifo
+
 /opt/secos/bin/database_server &
 echo "database server started"
 
