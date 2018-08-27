@@ -37,4 +37,30 @@ int is_user_in_set(int user_id_index, USER_SET * set) {
     return (*set) & tmp;
 }
 
+USER_SET set_union(USER_SET set1, USER_SET set2) {
+    return set1 | set2;
+}
+
+USER_SET set_intersection(USER_SET set1, USER_SET set2) {
+    return set1 & set2;
+}
+
+//Is set1 subset of set2
+int is_subset_of(USER_SET set1, USER_SET set2) {
+    USER_SET result = set1 & set2;
+    if(set1 == result)
+        return 1;
+
+    return 0;
+}
+
+//Is set1 superset of set2
+int is_superset_of(USER_SET set1, USER_SET set2) {
+    USER_SET result = set1 | set2;
+    if(set1 == result)
+        return 1;
+
+    return 0;
+}
+
 #endif

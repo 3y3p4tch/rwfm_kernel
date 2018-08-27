@@ -73,7 +73,7 @@ int add_user_id(USER_ID new_user_id) {
     all_user_ids[num_user_ids].host_id_index = new_user_id.host_id_index;
     all_user_ids[num_user_ids].uid = new_user_id.uid;
 
-    return num_user_ids++;
+    return ++num_user_ids;
 }
 
 int get_user_id_index(USER_ID user_id) {
@@ -107,7 +107,7 @@ int add_group_id(GROUP_ID new_group_id) {
     all_group_ids[num_group_ids].gid = new_group_id.gid;
     all_group_ids[num_group_ids].members = new_group_id.members;
 
-    return num_group_ids++;
+    return ++num_group_ids;
 }
 
 int get_group_id_index(GROUP_ID group_id) {
@@ -143,44 +143,12 @@ int add_object_id(OBJECT_ID new_object_id) {
     all_object_ids[num_object_ids].device_id = new_object_id.device_id;
     all_object_ids[num_object_ids].inode_number = new_object_id.inode_number;
 
-    return num_object_ids++;
+    return ++num_object_ids;
 }
 
 int get_object_id_index(OBJECT_ID object_id) {
     for(int i=0;i<num_object_ids;i++) {
         if(match_object_ids(all_object_ids[i], object_id))
-            return i;
-    }
-
-    return -1;
-}
-
-extern int num_subject_ids;
-extern SUBJECT_ID * all_subject_ids;
-
-int match_subject_ids(SUBJECT_ID sub_id1, SUBJECT_ID sub_id2) {
-    return sub_id1.host_id_index == sub_id2.host_id_index
-            && sub_id1.uid == sub_id2.uid
-            && sub_id1.pid == sub_id2.pid;
-}
-
-int add_subject_id(SUBJECT_ID new_subject_id) {
-    for(int i=0;i<num_subject_ids;i++) {
-        if(match_subject_ids(all_subject_ids[i], new_subject_id))
-            return i;
-    }
-
-    all_subject_ids = (SUBJECT_ID *)realloc(all_subject_ids, (num_subject_ids+1) * sizeof(SUBJECT_ID));
-    all_subject_ids[num_subject_ids].host_id_index = new_subject_id.host_id_index;
-    all_subject_ids[num_subject_ids].uid = new_subject_id.uid;
-    all_subject_ids[num_subject_ids].pid = new_subject_id.pid;
-
-    return num_object_ids++;
-}
-
-int get_subject_id_index(SUBJECT_ID subject_id) {
-    for(int i=0;i<num_subject_ids;i++) {
-        if(match_subject_ids(all_subject_ids[i], subject_id))
             return i;
     }
 
@@ -206,7 +174,7 @@ int add_object(OBJECT new_object) {
     all_objects[num_objects].readers = new_object.readers;
     all_objects[num_objects].writers = new_object.writers;
 
-    return num_objects++;
+    return ++num_objects;
 }
 
 int get_object_from_obj_id_index(int obj_id_index) {
@@ -218,11 +186,44 @@ int get_object_from_obj_id_index(int obj_id_index) {
     return -1;
 }
 
-int update_object_label(int obj_index, USER_SET readers, USER_SET writers) {
+int update_object_label(int obj_id_index, USER_SET readers, USER_SET writers) {
+    int obj_index = get_object_from_obj_id_index(obj_id_index);
     all_objects[obj_index].readers = readers;
     all_objects[obj_index].writers = writers;
 
     return 0;
+}
+
+extern int num_subject_ids;
+extern SUBJECT_ID * all_subject_ids;
+
+int match_subject_ids(SUBJECT_ID sub_id1, SUBJECT_ID sub_id2) {
+    return sub_id1.host_id_index == sub_id2.host_id_index
+            && sub_id1.uid == sub_id2.uid
+            && sub_id1.pid == sub_id2.pid;
+}
+
+int add_subject_id(SUBJECT_ID new_subject_id) {
+    for(int i=0;i<num_subject_ids;i++) {
+        if(match_subject_ids(all_subject_ids[i], new_subject_id))
+            return i;
+    }
+
+    all_subject_ids = (SUBJECT_ID *)realloc(all_subject_ids, (num_subject_ids+1) * sizeof(SUBJECT_ID));
+    all_subject_ids[num_subject_ids].host_id_index = new_subject_id.host_id_index;
+    all_subject_ids[num_subject_ids].uid = new_subject_id.uid;
+    all_subject_ids[num_subject_ids].pid = new_subject_id.pid;
+
+    return ++num_subject_ids;
+}
+
+int get_subject_id_index(SUBJECT_ID subject_id) {
+    for(int i=0;i<num_subject_ids;i++) {
+        if(match_subject_ids(all_subject_ids[i], subject_id))
+            return i;
+    }
+
+    return -1;
 }
 
 extern int num_subjects;
@@ -244,7 +245,7 @@ int add_subject(SUBJECT new_subject) {
     all_subjects[num_subjects].readers = new_subject.readers;
     all_subjects[num_subjects].writers = new_subject.writers;
 
-    return num_subjects++;
+    return ++num_subjects;
 }
 
 int get_subject_from_sub_id_index(int sub_id_index) {
@@ -256,7 +257,8 @@ int get_subject_from_sub_id_index(int sub_id_index) {
     return -1;
 }
 
-int update_subject_label(int sub_index, USER_SET readers, USER_SET writers) {
+int update_subject_label(int sub_id_index, USER_SET readers, USER_SET writers) {
+    int sub_index = get_subject_from_sub_id_index(sub_id_index);
     all_subjects[sub_index].readers = readers;
     all_subjects[sub_index].writers = writers;
 
@@ -283,7 +285,7 @@ int add_new_mapping(FD_MAP new_map) {
     fd_map[num_fd_maps].obj_id_index = new_map.obj_id_index;
     fd_map[num_fd_maps].fd = new_map.fd;
 
-    return num_fd_maps++;
+    return ++num_fd_maps;
 }
 
 int get_obj_id_index_from_sub_id_and_fd(uint sub_id_index, uint fd) {

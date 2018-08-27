@@ -45,6 +45,47 @@ int open_check(char * host_name, struct stat * file_info, int fd, int uid, int p
     return 0;
 }
 
+int file_read_check(char * host_name, int uid, int pid, int fd) {
+    int host_id_index = get_host_index(host_name);
+    int sub_id_index = get_subject_id_index(host_id_index, uid, pid);
+    int obj_id_index = get_obj_id_index_from_fd_map(sub_id_index, fd);
 
+    //If fd is not a file fd
+    if(obj_id_index == -1)
+        return -1;
+
+    SUBJECT subject = get_subject(sub_id_index);
+    OBJECT object = get_object(obj_id_index);
+
+    if(is_user_in_set(subject.owner, &object.readers)) {
+        subject.readers = set_intersection(subject.readers, object.readers);
+        subject.writers = set_union(subject.writers, object.writers);
+        update_subject_label(sub_id_index, subject.readers, subject.writers);
+
+        return 1;
+    }
+
+    return 0;
+}
+
+int file_write_check(char * host_name, int uid, int pid, int fd) {
+    int host_id_index = get_host_index(host_name);
+    int sub_id_index = get_subject_id_index(host_id_index, uid, pid);
+    int obj_id_index = get_obj_id_index_from_fd_map(sub_id_index, fd);
+
+    //If fd is not a file fd
+    if(obj_id_index == -1)
+        return -1;
+
+    SUBJECT subject = get_subject(sub_id_index);
+    OBJECT object = get_object(obj_id_index);
+
+    if(is_user_in_set(subject.owner, &object.writers)
+        && is_superset_of(subject.readers, object.readers)
+        && is_subset_of(subject.writers, object.writers))
+        return 1;
+
+    return 0;
+}
 
 #endif

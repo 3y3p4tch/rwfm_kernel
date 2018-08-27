@@ -220,10 +220,10 @@ int do_operation(int operation, char **req_args, int num_args) {
         {
             if(num_args != 4)
                 return -1;
-            int update_obj = strtol(req_args[1], NULL, 10);
+            int update_obj_id = strtol(req_args[1], NULL, 10);
             USER_SET new_obj_readers = strtoull(req_args[2], NULL, 10);
             USER_SET new_obj_writers = strtoull(req_args[3], NULL, 10);
-            sprintf(response, "%d", update_object_label(update_obj, new_obj_readers, new_obj_writers));
+            sprintf(response, "%d", update_object_label(update_obj_id, new_obj_readers, new_obj_writers));
             write_response(response);
             break;
         }
@@ -257,10 +257,10 @@ int do_operation(int operation, char **req_args, int num_args) {
         {
             if(num_args != 4)
                 return -1;
-            int update_sub = strtol(req_args[1], NULL, 10);
+            int update_sub_id = strtol(req_args[1], NULL, 10);
             USER_SET new_sub_readers = strtoull(req_args[2], NULL, 10);
             USER_SET new_sub_writers = strtoull(req_args[3], NULL, 10);
-            sprintf(response, "%d", update_subject_label(update_sub, new_sub_readers, new_sub_writers));
+            sprintf(response, "%d", update_subject_label(update_sub_id, new_sub_readers, new_sub_writers));
             write_response(response);
             break;
         }

@@ -3,6 +3,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <unistd.h>
 
 
 int
@@ -19,7 +20,7 @@ main(int argc, char *argv[]){
     else
         close(fd1);
 */
-    fd1 = open64("file1", O_RDONLY);
+    fd1 = open("file1", O_RDONLY);
     if(fd1<0){
         printf("\nFailed to open '1'");
         exit(1);

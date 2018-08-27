@@ -35,4 +35,27 @@ int open(const char *path, int flags) {
     sprintf(host_name, HOSTNAME);
 
     open_check(host_name, &file_info, fd, getuid(), getpid());
+    return fd;
+}
+
+ssize_t read(int fd, void *buf, size_t count) {
+    char host_name[1024];
+    sprintf(host_name, HOSTNAME);
+
+    if(file_read_check(host_name, getuid(), getpid(), fd) == 0) {
+        return 0;
+    }
+
+    return underlying_read(fd, buf, count);
+}
+
+ssize_t write(int fd, const void *buf, size_t count) {
+    char host_name[1024];
+    sprintf(host_name, HOSTNAME);
+
+    if(file_write_check(host_name, getuid(), getpid(), fd) == 0) {
+        return 0;
+    }
+
+    return underlying_write(fd, buf, count);
 }

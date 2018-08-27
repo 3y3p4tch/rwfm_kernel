@@ -155,9 +155,9 @@ OBJECT get_object(int obj_id_index) {
     return object;
 }
 
-int update_object_label(int obj_index, unsigned long long readers, unsigned long long writers) {
+int update_object_label(int obj_id_index, unsigned long long readers, unsigned long long writers) {
     char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
-    sprintf(request, "%d %d %llu %llu", UPDATE_OBJECT_LABEL_OP, obj_index, readers, writers);
+    sprintf(request, "%d %d %llu %llu", UPDATE_OBJECT_LABEL_OP, obj_id_index, readers, writers);
     write_request(request);
     read_response(response);
 
@@ -206,9 +206,9 @@ SUBJECT get_subject(int sub_id_index) {
     return subject;
 }
 
-int update_subject_label(int sub_index, unsigned long long readers, unsigned long long writers) {
+int update_subject_label(int sub_id_index, unsigned long long readers, unsigned long long writers) {
     char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
-    sprintf(request, "%d %d %llu %llu", UPDATE_SUBJECT_LABEL_OP, sub_index, readers, writers);
+    sprintf(request, "%d %d %llu %llu", UPDATE_SUBJECT_LABEL_OP, sub_id_index, readers, writers);
     write_request(request);
     read_response(response);
 
