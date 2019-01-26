@@ -8,6 +8,7 @@ all: database_server.c add_users_and_groups.c preload.c
 	echo "#define HOSTNAME \"${HOSTNAME}\"" >> preload.h
 	gcc database_server.c -o database_server
 	gcc add_users_and_groups.c -o add_users_and_groups
+	gcc enable_rwfm.c -o enable_rwfm
 	gcc -rdynamic -shared -fPIC -o preload.so preload.c ${DL}
 
 debug: database_server.c add_users_and_groups.c preload.c
@@ -15,4 +16,5 @@ debug: database_server.c add_users_and_groups.c preload.c
 	echo "#define DEBUG" >> preload.h
 	gcc database_server.c -o database_server
 	gcc add_users_and_groups.c -o add_users_and_groups
+	gcc enable_rwfm.c -o enable_rwfm
 	gcc -rdynamic -shared -fPIC -o preload.so preload.c ${DL}

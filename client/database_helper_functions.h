@@ -73,7 +73,7 @@ int add_user_id(USER_ID new_user_id) {
     all_user_ids[num_user_ids].host_id_index = new_user_id.host_id_index;
     all_user_ids[num_user_ids].uid = new_user_id.uid;
 
-    return ++num_user_ids;
+    return num_user_ids++;
 }
 
 int get_user_id_index(USER_ID user_id) {
@@ -107,7 +107,7 @@ int add_group_id(GROUP_ID new_group_id) {
     all_group_ids[num_group_ids].gid = new_group_id.gid;
     all_group_ids[num_group_ids].members = new_group_id.members;
 
-    return ++num_group_ids;
+    return num_group_ids++;
 }
 
 int get_group_id_index(GROUP_ID group_id) {
@@ -143,7 +143,7 @@ int add_object_id(OBJECT_ID new_object_id) {
     all_object_ids[num_object_ids].device_id = new_object_id.device_id;
     all_object_ids[num_object_ids].inode_number = new_object_id.inode_number;
 
-    return ++num_object_ids;
+    return num_object_ids++;
 }
 
 int get_object_id_index(OBJECT_ID object_id) {
@@ -174,7 +174,7 @@ int add_object(OBJECT new_object) {
     all_objects[num_objects].readers = new_object.readers;
     all_objects[num_objects].writers = new_object.writers;
 
-    return ++num_objects;
+    return num_objects++;
 }
 
 int get_object_from_obj_id_index(int obj_id_index) {
@@ -214,7 +214,7 @@ int add_subject_id(SUBJECT_ID new_subject_id) {
     all_subject_ids[num_subject_ids].uid = new_subject_id.uid;
     all_subject_ids[num_subject_ids].pid = new_subject_id.pid;
 
-    return ++num_subject_ids;
+    return num_subject_ids++;
 }
 
 int get_subject_id_index(SUBJECT_ID subject_id) {
@@ -245,7 +245,7 @@ int add_subject(SUBJECT new_subject) {
     all_subjects[num_subjects].readers = new_subject.readers;
     all_subjects[num_subjects].writers = new_subject.writers;
 
-    return ++num_subjects;
+    return num_subjects++;
 }
 
 int get_subject_from_sub_id_index(int sub_id_index) {
@@ -285,7 +285,7 @@ int add_new_mapping(FD_MAP new_map) {
     fd_map[num_fd_maps].obj_id_index = new_map.obj_id_index;
     fd_map[num_fd_maps].fd = new_map.fd;
 
-    return ++num_fd_maps;
+    return num_fd_maps++;
 }
 
 int get_obj_id_index_from_sub_id_and_fd(uint sub_id_index, uint fd) {

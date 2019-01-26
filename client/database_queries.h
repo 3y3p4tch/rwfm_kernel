@@ -39,6 +39,15 @@ int write_request(char *req) {
     return ret;
 }
 
+int is_rwfm_enabled() {
+    char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
+    sprintf(request, "%d", IS_RWFM_ENABLED_OP);
+    write_request(request);
+    read_response(response);
+
+    return strtol(response, NULL, 10);
+}
+
 int add_host(char *host) {
     char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
     sprintf(request, "%d ", ADD_HOST_OP);

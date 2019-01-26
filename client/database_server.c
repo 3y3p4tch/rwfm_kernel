@@ -8,6 +8,8 @@
 #include "database_helper_functions.h"
 #include "database_macros.h"
 
+int rwfm_enabled = 0;
+
 int num_hosts = 0;
 HOST * all_hosts = NULL;
 
@@ -63,6 +65,25 @@ int do_operation(int operation, char **req_args, int num_args) {
     char response[MAX_REQUEST_LENGTH];
 
     switch(operation) {
+
+        case IS_RWFM_ENABLED_OP:
+        {
+            if(num_args!=1)
+                return -1;
+            sprintf(response, "%d", rwfm_enabled);
+            write_response(response);
+            break;
+        }
+
+        case SET_RWFM_ENABLED_OP:
+        {
+            if(num_args!=2)
+                return -1;
+            rwfm_enabled = strtol(req_args[1], NULL, 10);
+            sprintf(response, "%d", rwfm_enabled);
+            write_response(response);
+            break;
+        }
 
         case ADD_HOST_OP:
         {
@@ -309,6 +330,8 @@ int do_operation(int operation, char **req_args, int num_args) {
         default:
             return -2;
     }
+
+	printf("Operation response %d : %s\n",operation,response);
 
     return 0;
 }

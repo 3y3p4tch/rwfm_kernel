@@ -75,7 +75,7 @@ echo "library copied"
 
 mkdir -p /opt/secos/bin/
 #cp daemon.py rwfmd.py rwfm secure_shell /opt/secos/bin/
-cp database_server secure_shell /opt/secos/bin/
+cp database_server secure_shell enable_rwfm /opt/secos/bin/
 chmod +x /opt/secos/bin/*
 #cp rwfmd.cfg /etc/
 
