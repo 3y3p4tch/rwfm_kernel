@@ -33,8 +33,8 @@ int remove_user_from_set(int user_to_remove, USER_SET * set) {
 int is_user_in_set(int user_id_index, USER_SET * set) {
     USER_SET tmp = 1;
     tmp <<= user_id_index;
-
-    return (*set) & tmp;
+	
+    return ((*set) & tmp == 0) ? 0:1;
 }
 
 USER_SET set_union(USER_SET set1, USER_SET set2) {

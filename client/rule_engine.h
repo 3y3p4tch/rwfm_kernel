@@ -2,6 +2,7 @@
 #define _RULE_ENGINE_H_
 
 #include <sys/stat.h>
+#include <stdio.h>
 #include "infer_object_labels.h"
 
 void fork_check(char* host_name, int uid, int child_pid, int parent_pid) {
@@ -56,7 +57,7 @@ int file_read_check(char * host_name, int uid, int pid, int fd) {
 
     SUBJECT subject = get_subject(sub_id_index);
     OBJECT object = get_object(obj_id_index);
-
+	
     if(is_user_in_set(subject.owner, &object.readers)) {
         subject.readers = set_intersection(subject.readers, object.readers);
         subject.writers = set_union(subject.writers, object.writers);

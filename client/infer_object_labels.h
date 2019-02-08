@@ -15,11 +15,12 @@ USER_SET get_all_users(int number_of_users) {
 
 int infer_labels(OBJECT * object, struct stat * object_info, int host_id_index) {
     int user_id_index = get_user_id_index(host_id_index, object_info->st_uid);
+
     if(user_id_index==-1)
         return -1;
     
     if(object_info->st_mode & S_IRUSR)
-        add_user_to_label(user_id_index, &(object->readers));   
+        add_user_to_label(user_id_index, &(object->readers));
 
     if(object_info->st_mode & S_IWUSR)
         add_user_to_label(user_id_index, &(object->writers));

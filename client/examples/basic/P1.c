@@ -26,6 +26,10 @@ main(int argc, char *argv[]){
         exit(1);
     }else{
         n = read(fd1, buf, 1024);
+		if(n<0) {
+			printf("\nRead failed!\n");
+			exit(1);
+		}
         buf[n]='\0';
         printf("%s\n", buf);
         printf("\nRead done.");
@@ -39,6 +43,10 @@ main(int argc, char *argv[]){
         exit(1);
     }else{
         n = write(fd2, buf, n);
+		if(n<0) {
+			printf("\nWrite failed!\n");
+			exit(1);
+		}
         close(fd2);
         printf("\nWrite done.");
     }

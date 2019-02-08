@@ -48,7 +48,7 @@ ssize_t read(int fd, void *buf, size_t count) {
 
     if(is_rwfm_enabled()) {
         if(file_read_check(host_name, getuid(), getpid(), fd) == 0) {
-            return 0;
+            return -1;
         }
     }
 
@@ -61,7 +61,7 @@ ssize_t write(int fd, const void *buf, size_t count) {
 
     if(is_rwfm_enabled()) {
         if(file_write_check(host_name, getuid(), getpid(), fd) == 0) {
-            return 0;
+            return -1;
         }
     }
 
