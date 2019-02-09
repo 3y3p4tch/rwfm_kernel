@@ -2,6 +2,7 @@
 #define _UND_LIBC_FUN_H_
 
 #include <dlfcn.h>
+#include <sys/socket.h>
 #include "preload.h"
 
 void *get_libc() {
@@ -50,6 +51,70 @@ int underlying_close(int fd) {
         underlying = dlsym(get_libc(), "close");
     }
     return (*underlying)(fd);
+}
+
+int underlying_socket(int domain, int type, int protocol) {
+    static int (*underlying)(int , int , int ) = 0;
+    if (!underlying) {
+        underlying = dlsym(get_libc(), "socket");
+    }
+    return (*underlying)(domain, type, protocol);
+}
+
+int underlying_bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
+	static int (*underlying)(int, const struct sockaddr *, socklen_t) = 0;
+    if (!underlying) {
+        underlying = dlsym(get_libc(), "bind");
+    }
+    return (*underlying)(sockfd, addr, addrlen);
+}
+
+int underlying_connect(int sockfd, const struct sockaddr* addr, socklen_t addrlen) {
+    static int (*underlying)(int ,const struct sockaddr* , socklen_t ) = 0;
+    if (!underlying) {
+        underlying = dlsym(get_libc(), "connect");
+    }
+    return (*underlying)(sockfd, addr, addrlen);
+}
+
+int underlying_accept(int sockfd, struct sockaddr* addr, socklen_t *addrlen) {
+    static int (*underlying)(int, struct sockaddr*, socklen_t* ) = 0;
+    if (!underlying) {
+        underlying = dlsym(get_libc(), "accept");
+    }
+    return (*underlying)(sockfd, addr, addrlen);
+}
+
+ssize_t underlying_send(int sockfd, const void *buf, size_t len, int flags) {
+    static int (*underlying)(int ,const void * , size_t, int ) = 0;
+    if (!underlying) {
+        underlying = dlsym(get_libc(), "send");
+    }
+    return (*underlying)(sockfd, buf, len, flags);
+}
+
+ssize_t underlying_recv(int sockfd, void *buf, size_t len, int flags) {
+    static int (*underlying)(int ,void * , size_t, int ) = 0;
+    if (!underlying) {
+        underlying = dlsym(get_libc(), "recv");
+    }
+    return (*underlying)(sockfd, buf, len, flags);
+}
+
+int underlying_getsockname(int sockfd, struct sockaddr *addr, socklen_t *addrlen) {
+	static int (*underlying)(int, struct sockaddr *, socklen_t *) = 0;
+    if (!underlying) {
+        underlying = dlsym(get_libc(), "getsockname");
+    }
+    return (*underlying)(sockfd, addr, addrlen);
+}
+
+int underlying_getpeername(int sockfd, struct sockaddr *addr, socklen_t *addrlen) {
+	static int (*underlying)(int, struct sockaddr *, socklen_t *) = 0;
+    if (!underlying) {
+        underlying = dlsym(get_libc(), "getpeername");
+    }
+    return (*underlying)(sockfd, addr, addrlen);
 }
 
 #endif

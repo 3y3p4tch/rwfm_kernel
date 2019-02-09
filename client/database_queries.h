@@ -25,6 +25,7 @@ int get_args_from_request(char **args, char *req) {
     return i;
 }
 
+
 int read_response(char *res) {
     int read_fifo_fd = underlying_open(RESPONSE_FIFO_PATH, O_RDONLY);
     int ret = underlying_read(read_fifo_fd, res, MAX_REQUEST_LENGTH);
@@ -32,12 +33,14 @@ int read_response(char *res) {
     return ret;
 }
 
+
 int write_request(char *req) {
     int write_fifo_fd = underlying_open(REQUEST_FIFO_PATH, O_WRONLY);
     int ret = underlying_write(write_fifo_fd, req, strlen(req)+1);
     underlying_close(write_fifo_fd);
     return ret;
 }
+
 
 int is_rwfm_enabled() {
     char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
@@ -47,6 +50,7 @@ int is_rwfm_enabled() {
 
     return strtol(response, NULL, 10);
 }
+
 
 int add_host(char *host) {
     char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
@@ -67,6 +71,7 @@ int get_host_index(char *host) {
 
     return strtol(response, NULL, 10);
 }
+
 
 int add_user_id(int host_id_index, int uid) {
     char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
@@ -95,6 +100,7 @@ int get_number_of_users() {
     return strtol(response, NULL, 10);
 }
 
+
 int add_group_id(int host_id_index, int gid, unsigned long long int member_set) {
     char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
     sprintf(request, "%d %d %d %llu", ADD_GROUP_ID_OP, host_id_index, gid, member_set);
@@ -121,6 +127,7 @@ unsigned long long int get_members_from_group_id(int group_id_index) {
 
     return strtoull(response, NULL, 10);
 }
+
 
 int add_object_id(int host_id_index, int device_id, int inode_num) {
     char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
@@ -173,6 +180,7 @@ int update_object_label(int obj_id_index, unsigned long long readers, unsigned l
     return strtol(response, NULL, 10);
 }
 
+
 int add_subject_id(int host_id_index, int uid, int pid) {
     char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
     sprintf(request, "%d %d %d %d", ADD_SUBJECT_ID_OP, host_id_index, uid, pid);
@@ -224,6 +232,68 @@ int update_subject_label(int sub_id_index, unsigned long long readers, unsigned 
     return strtol(response, NULL, 10);
 }
 
+
+int add_socket(uint sub_id_index, uint sock_fd, ulong ip, uint port, uint owner, USER_SET readers, USER_SET writers) {
+    char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
+    sprintf(request, "%d %u %u %lu %u %u %llu %llu", ADD_SOCKET_OP, sub_id_index, sock_fd, ip, port, owner, readers, writers);
+    write_request(request);
+    read_response(response);
+
+    return strtol(response, NULL, 10);
+}
+
+int update_socket_ip_port(int socket_index, ulong ip, uint port) {
+	char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
+    sprintf(request, "%d %d %lu %u", UPDATE_SOCKET_IP_PORT_OP, socket_index, ip, port);
+    write_request(request);
+    read_response(response);
+
+    return strtol(response, NULL, 10);
+}
+
+int get_socket_index_from_sub_id_sock_fd(uint sub_id_index, uint sock_fd) {
+	char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
+    sprintf(request, "%d %u %u", GET_SOCKET_INDEX_FROM_SUB_ID_SOCK_FD_OP, sub_id_index, sock_fd);
+    write_request(request);
+    read_response(response);
+
+    return strtol(response, NULL, 10);
+}
+
+int get_socket_index_from_ip_port(ulong ip, uint port) {
+	char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
+    sprintf(request, "%d %lu %u", GET_SOCKET_INDEX_FROM_IP_PORT_OP, ip, port);
+    write_request(request);
+    read_response(response);
+
+    return strtol(response, NULL, 10);
+}
+
+SOCKET_OBJECT get_socket(int socket_index) {
+    char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
+    sprintf(request, "%d %d", GET_SOCKET_OP, socket_index);
+    write_request(request);
+    read_response(response);
+    char **arguments = (char**)malloc(MAX_REQUEST_LENGTH * sizeof(char*));
+    get_args_from_request(arguments, response);
+    SOCKET_OBJECT socket;
+    socket.owner = strtoul(arguments[0], NULL, 10);
+    socket.readers = strtoull(arguments[1], NULL, 10);
+    socket.writers = strtoull(arguments[2], NULL, 10);
+
+    return socket;
+}
+
+int update_socket_label(int socket_index, USER_SET readers, USER_SET writers) {
+    char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
+    sprintf(request, "%d %d %llu %llu", UPDATE_SOCKET_LABEL_OP, socket_index, readers, writers);
+    write_request(request);
+    read_response(response);
+
+    return strtol(response, NULL, 10);
+}
+
+
 int add_fd_mapping(int sub_id_index, int obj_id_index, int fd) {
     char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
     sprintf(request, "%d %d %d %d", ADD_NEW_FD_MAPPING_OP, sub_id_index, obj_id_index, fd);
@@ -250,6 +320,35 @@ int get_sub_id_index_from_fd_map(int obj_id_index, int fd) {
 
     return strtol(response, NULL, 10);
 }
+
+
+int add_new_connection_map(int sock_index_1) {
+    char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
+    sprintf(request, "%d %d", ADD_NEW_CONNECTION_MAP_OP, sock_index_1);
+    write_request(request);
+    read_response(response);
+
+    return strtol(response, NULL, 10);
+}
+
+int update_connection_map_sock_index_2(int sock_index_1, int sock_index_2) {
+	char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
+    sprintf(request, "%d %d %d", UPDATE_CONNECTION_MAP_SOCK_INDEX_2_OP, sock_index_1, sock_index_2);
+    write_request(request);
+    read_response(response);
+
+    return strtol(response, NULL, 10);
+}
+
+int get_peer_socket_index(int sock_index) {
+	char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
+    sprintf(request, "%d %d", GET_PEER_SOCKET_INDEX_OP, sock_index);
+    write_request(request);
+    read_response(response);
+
+    return strtol(response, NULL, 10);
+}
+
 
 int copy_subject_info(int src_sub_id_index, int dstn_sub_id_index) {
     char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];

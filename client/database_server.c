@@ -31,8 +31,14 @@ OBJECT * all_objects = NULL;
 int num_subjects = 0;
 SUBJECT * all_subjects = NULL;
 
+int num_sockets = 0;
+SOCKET_OBJECT * all_sockets = NULL;
+
 int num_fd_maps = 0;
 FD_MAP * fd_map = NULL;
+
+int num_connection_maps = 0;
+CONNECTION_MAP * connection_map = NULL;
 
 int read_request(char *req) {
     int read_fifo_fd = open(REQUEST_FIFO_PATH, O_RDONLY);
@@ -74,7 +80,6 @@ int do_operation(int operation, char **req_args, int num_args) {
             write_response(response);
             break;
         }
-
         case SET_RWFM_ENABLED_OP:
         {
             if(num_args!=2)
@@ -84,6 +89,7 @@ int do_operation(int operation, char **req_args, int num_args) {
             write_response(response);
             break;
         }
+
 
         case ADD_HOST_OP:
         {
@@ -101,6 +107,8 @@ int do_operation(int operation, char **req_args, int num_args) {
             write_response(response);
             break;
         }
+
+
         case ADD_USER_ID_OP:
         {
             if(num_args != 3)
@@ -130,7 +138,9 @@ int do_operation(int operation, char **req_args, int num_args) {
             sprintf(response, "%d", get_number_of_users());
             write_response(response);
             break;
-        } 
+        }
+
+
         case ADD_GROUP_ID_OP:
         {
             if(num_args != 4)
@@ -163,6 +173,8 @@ int do_operation(int operation, char **req_args, int num_args) {
             write_response(response);
             break;
         }
+
+
         case ADD_OBJECT_ID_OP:
         {
             if(num_args != 4)
@@ -187,31 +199,7 @@ int do_operation(int operation, char **req_args, int num_args) {
             write_response(response);
             break;
         }
-        case ADD_SUBJECT_ID_OP:
-        {
-            if(num_args != 4)
-                return -1;
-            SUBJECT_ID subject_id_add;
-            subject_id_add.host_id_index = strtol(req_args[1], NULL, 10);
-            subject_id_add.uid = strtol(req_args[2], NULL, 10);
-            subject_id_add.pid = strtol(req_args[3], NULL, 10);
-            sprintf(response, "%d", add_subject_id(subject_id_add));
-            write_response(response);
-            break;
-        }
-        case GET_SUBJECT_ID_INDEX_OP:
-        {
-            if(num_args != 4)
-                return -1;
-            SUBJECT_ID subject_id_get;
-            subject_id_get.host_id_index = strtol(req_args[1], NULL, 10);
-            subject_id_get.uid = strtol(req_args[2], NULL, 10);
-            subject_id_get.pid = strtol(req_args[3], NULL, 10);
-            sprintf(response, "%d", get_subject_id_index(subject_id_get));
-            write_response(response);
-            break;
-        }
-        case ADD_OBJECT_OP:
+		case ADD_OBJECT_OP:
         {
             if(num_args != 5)
                 return -1;
@@ -245,6 +233,32 @@ int do_operation(int operation, char **req_args, int num_args) {
             USER_SET new_obj_readers = strtoull(req_args[2], NULL, 10);
             USER_SET new_obj_writers = strtoull(req_args[3], NULL, 10);
             sprintf(response, "%d", update_object_label(update_obj_id, new_obj_readers, new_obj_writers));
+            write_response(response);
+            break;
+        }
+
+
+        case ADD_SUBJECT_ID_OP:
+        {
+            if(num_args != 4)
+                return -1;
+            SUBJECT_ID subject_id_add;
+            subject_id_add.host_id_index = strtol(req_args[1], NULL, 10);
+            subject_id_add.uid = strtol(req_args[2], NULL, 10);
+            subject_id_add.pid = strtol(req_args[3], NULL, 10);
+            sprintf(response, "%d", add_subject_id(subject_id_add));
+            write_response(response);
+            break;
+        }
+        case GET_SUBJECT_ID_INDEX_OP:
+        {
+            if(num_args != 4)
+                return -1;
+            SUBJECT_ID subject_id_get;
+            subject_id_get.host_id_index = strtol(req_args[1], NULL, 10);
+            subject_id_get.uid = strtol(req_args[2], NULL, 10);
+            subject_id_get.pid = strtol(req_args[3], NULL, 10);
+            sprintf(response, "%d", get_subject_id_index(subject_id_get));
             write_response(response);
             break;
         }
@@ -285,6 +299,78 @@ int do_operation(int operation, char **req_args, int num_args) {
             write_response(response);
             break;
         }
+
+
+		case ADD_SOCKET_OP:
+		{
+			if(num_args != 8)
+                return -1;
+            SOCKET_OBJECT socket_add;
+            socket_add.sub_id_index = strtol(req_args[1], NULL, 10);
+			socket_add.sock_fd = strtol(req_args[2], NULL, 10);
+			socket_add.ip = strtoul(req_args[3], NULL, 10);
+			socket_add.port = strtol(req_args[4], NULL, 10);
+            socket_add.owner = strtol(req_args[5], NULL, 10);
+            socket_add.readers = strtoull(req_args[6], NULL, 10);
+            socket_add.writers = strtoull(req_args[7], NULL, 10);
+            sprintf(response, "%d", add_socket(socket_add));
+            write_response(response);
+            break;
+		}
+		case UPDATE_SOCKET_IP_PORT_OP:
+		{
+			if(num_args != 4)
+                return -1;
+            int socket_index = strtol(req_args[1], NULL, 10);
+			ulong ip = strtoul(req_args[2], NULL, 10);
+			uint port = strtoul(req_args[3], NULL, 10);
+            sprintf(response, "%d", update_socket_ip_port(socket_index, ip, port));
+            write_response(response);
+            break;
+		}
+		case GET_SOCKET_INDEX_FROM_SUB_ID_SOCK_FD_OP:
+		{
+			if(num_args != 3)
+                return -1;
+			int sub_id_index = strtol(req_args[1], NULL, 10);
+            int sock_fd = strtol(req_args[2], NULL, 10);
+            sprintf(response, "%d", get_socket_index_from_sub_id_sock_fd(sub_id_index, sock_fd));
+            write_response(response);
+            break;
+		}
+		case GET_SOCKET_INDEX_FROM_IP_PORT_OP:
+		{
+			if(num_args != 3)
+                return -1;
+			ulong ip = strtoul(req_args[1], NULL, 10);
+            uint port = strtoul(req_args[2], NULL, 10);
+            sprintf(response, "%d", get_socket_index_from_ip_port(ip, port));
+            write_response(response);
+            break;
+		}
+		case GET_SOCKET_OP:
+        {
+            if(num_args != 2)
+                return -1;
+            int socket_index = strtol(req_args[1], NULL, 10);
+            SOCKET_OBJECT sock = all_sockets[socket_index];
+            sprintf(response, "%u %llu %llu",sock.owner,sock.readers,sock.writers);
+            write_response(response);
+            break;
+        }
+		case UPDATE_SOCKET_LABEL_OP:
+        {
+            if(num_args != 4)
+                return -1;
+            int socket_index = strtol(req_args[1], NULL, 10);
+            USER_SET readers = strtoull(req_args[2], NULL, 10);
+            USER_SET writers = strtoull(req_args[3], NULL, 10);
+            sprintf(response, "%d", update_socket_label(socket_index, readers, writers));
+            write_response(response);
+            break;
+        }
+	
+
         case ADD_NEW_FD_MAPPING_OP:
         {
             if(num_args != 4)
@@ -317,6 +403,38 @@ int do_operation(int operation, char **req_args, int num_args) {
             write_response(response);
             break;
         }
+
+
+		case ADD_NEW_CONNECTION_MAP_OP:
+        {
+            if(num_args != 2)
+                return -1;
+            int sock_index_1 = strtol(req_args[1], NULL, 10);
+            sprintf(response, "%d", add_new_connection_map(sock_index_1));
+            write_response(response);
+            break;
+        }		
+		case UPDATE_CONNECTION_MAP_SOCK_INDEX_2_OP:
+		{
+			if(num_args != 3)
+                return -1;
+			int sock_index_1 = strtol(req_args[1], NULL, 10);
+			int sock_index_2 = strtol(req_args[2], NULL, 10);
+			sprintf(response, "%d", update_connection_map_sock_index_2(sock_index_1, sock_index_2));
+            write_response(response);
+			break;
+		}
+		case GET_PEER_SOCKET_INDEX_OP:
+		{
+			if(num_args != 2)
+                return -1;
+			int sock_index = strtol(req_args[1], NULL, 10);
+			sprintf(response, "%d", get_peer_socket_index(sock_index));
+            write_response(response);
+			break;
+		}
+
+
         case COPY_SUBJECT_FDS_OP:
         {
             if(num_args != 3)
@@ -327,6 +445,8 @@ int do_operation(int operation, char **req_args, int num_args) {
             write_response(response);
             break;
         }
+
+
         default:
             return -2;
     }

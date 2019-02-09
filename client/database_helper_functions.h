@@ -265,6 +265,52 @@ int update_subject_label(int sub_id_index, USER_SET readers, USER_SET writers) {
     return 0;
 }
 
+extern int num_sockets;
+extern SOCKET_OBJECT * all_sockets;
+
+int add_socket(SOCKET_OBJECT new_socket) {
+	all_sockets = (SOCKET_OBJECT *)realloc(all_sockets, (num_sockets+1) * sizeof(SOCKET_OBJECT));
+    all_sockets[num_sockets].sub_id_index = new_socket.sub_id_index;
+    all_sockets[num_sockets].sock_fd = new_socket.sock_fd;
+    all_sockets[num_sockets].port = new_socket.port;
+    all_sockets[num_sockets].ip = new_socket.ip;
+    all_sockets[num_sockets].owner = new_socket.owner;
+    all_sockets[num_sockets].readers = new_socket.readers;
+    all_sockets[num_sockets].writers = new_socket.writers;
+
+    return num_sockets++;
+}
+
+int update_socket_ip_port(int socket_index, ulong ip, uint port) {
+	all_sockets[socket_index].ip = ip;
+	all_sockets[socket_index].port = port;
+
+	return 0;
+}
+
+int get_socket_index_from_sub_id_sock_fd(int sub_id_index, int sock_fd) {
+	for(int i=0;i<num_sockets;i++)
+		if(all_sockets[i].sub_id_index == sub_id_index && all_sockets[i].sock_fd == sock_fd)
+			return i;
+
+	return -1;
+}
+
+int get_socket_index_from_ip_port(ulong ip, uint port) {
+	for(int i=0;i<num_sockets;i++)
+		if(all_sockets[i].ip == ip && all_sockets[i].port == port)
+			return i;
+
+	return -1;
+}
+
+int update_socket_label(int socket_index, USER_SET readers, USER_SET writers) {
+	all_sockets[socket_index].readers = readers;
+	all_sockets[socket_index].writers = writers;
+
+	return 0;
+}
+
 extern int num_fd_maps;
 extern FD_MAP * fd_map;
 
@@ -304,6 +350,39 @@ int get_sub_id_index_from_obj_id_and_fd(uint obj_id_index, uint fd) {
     }
 
     return -1;
+}
+
+extern int num_connection_maps;
+extern CONNECTION_MAP * connection_map;
+
+int add_new_connection_map(int sock_index_1) {
+	connection_map = (CONNECTION_MAP *)realloc(connection_map, (num_connection_maps+1) * sizeof(CONNECTION_MAP));
+	connection_map[num_connection_maps].sock_index_1 = sock_index_1;
+	connection_map[num_connection_maps].sock_index_2 = -1;
+
+	return num_connection_maps++;
+}
+
+int update_connection_map_sock_index_2(int sock_index_1, int sock_index_2) {
+	for(int i=0;i<num_connection_maps;i++) {
+		if(connection_map[i].sock_index_1 == sock_index_1)	{
+			connection_map[i].sock_index_2 = sock_index_2;
+			return 0;
+		}
+	}
+
+	return -1;
+}
+
+int get_peer_socket_index(int sock_index) {
+	for(int i=0;i<num_connection_maps;i++) {
+		if(connection_map[i].sock_index_1 == sock_index)
+			return connection_map[i].sock_index_2;
+		if(connection_map[i].sock_index_2 == sock_index)
+			return connection_map[i].sock_index_1;
+	}
+
+	return -1;
 }
 
 /*
