@@ -70,6 +70,10 @@ ssize_t write(int fd, const void *buf, size_t count) {
 
 int socket(int domain, int type, int protocol) {
     int fd = underlying_socket(domain, type, protocol);
+	if(!is_rwfm_enabled()) {
+		return fd;
+	}
+	printf("\n\nSOCKET: RWFM Enabled\n\n");
 	if(fd == -1)
         return -1;
 
@@ -84,6 +88,10 @@ int socket(int domain, int type, int protocol) {
 
 int bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
 	int ret = underlying_bind(sockfd, addr, addrlen);
+	if(!is_rwfm_enabled()) {
+		return ret;
+	}
+	printf("\n\nBIND: RWFM Enabled\n\n");
 	if(ret == -1)
 		return -1;
 
@@ -98,38 +106,58 @@ int bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
 
 int connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
 	int ret = underlying_connect(sockfd, addr, addrlen);
+	//if(!is_rwfm_enabled()) {
+	//	return ret;
+	//}
+	printf("\n\nCONNECT: RWFM Enabled\n\n");
 	if(ret == -1)
 		return -1;
 
 	char host_name[1024];
     sprintf(host_name, HOSTNAME);
 
-	if(connect_check(host_name, getuid(), getpid(), sockfd) != 1)
+	if(bind_check(host_name, getuid(), getpid(), sockfd) != 1 || connect_check(host_name, getuid(), getpid(), sockfd) != 1)
 		return -1;
 
 	return ret;
 }
 
 int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen) {
-	int ret = underlying_accept(sockfd, addr, addrlen);
-	if(ret == -1)
+	int new_sockfd = underlying_accept(sockfd, addr, addrlen);
+
+	printf("\n\nThe New Sockfd: %d\n\n", new_sockfd);
+
+	//if(!is_rwfm_enabled()) {
+	//	return new_sockfd;
+	//}
+
+	printf("\n\nACCEPT: RWFM Enabled\n\n");
+
+	if(new_sockfd == -1)
 		return -1;
 
 	char host_name[1024];
     sprintf(host_name, HOSTNAME);
 
-	if(accept_check(host_name, getuid(), getpid(), sockfd) != 1)
+	getchar();
+
+	if(accept_check(host_name, getuid(), getpid(), new_sockfd) != 1)
 		return -1;
 
-	return ret;
+	return new_sockfd;
 }
 
 ssize_t send(int sockfd, const void *buf, size_t len, int flags) {
-	char host_name[1024];
-    sprintf(host_name, HOSTNAME);
+	//if(is_rwfm_enabled()) {
 
-	if(send_check(host_name, getuid(), getpid(), sockfd) != 1)
-		return -1;
+		printf("\n\nSEND: RWFM Enabled\n\n");
+
+		char host_name[1024];
+		sprintf(host_name, HOSTNAME);
+
+		if(send_check(host_name, getuid(), getpid(), sockfd) != 1)
+			return -1;
+	//}
 
 	return underlying_send(sockfd, buf, len, flags);
 }
@@ -139,6 +167,14 @@ ssize_t recv(int sockfd, void *buf, size_t len, int flags) {
     sprintf(host_name, HOSTNAME);
 
 	ssize_t ret = underlying_recv(sockfd, buf, len, flags);
+
+	//if(!is_rwfm_enabled()) {
+	//	return ret;
+	//}
+
+	printf("\n\nRCV: RWFM Enabled\n\n");
+
+	getchar();
 
 	if(recv_check(host_name, getuid(), getpid(), sockfd) != 1) {
 		buf = NULL;

@@ -55,7 +55,7 @@ int get_user_id_index(int host_id_index, int uid) {
 
 int add_group_id(int host_id_index, int gid, unsigned long long int member_set) {
     char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
-    sprintf(request, "%d %d %d %llu", ADD_GROUP_ID_OP, host_id_index, gid, member_set);
+    sprintf(request, "%d %d %d %llx", ADD_GROUP_ID_OP, host_id_index, gid, member_set);
     write_request(request);
     read_response(response);
 
@@ -64,7 +64,7 @@ int add_group_id(int host_id_index, int gid, unsigned long long int member_set) 
 
 int get_group_id_index(int host_id_index, int gid, unsigned long long int members) {
     char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
-    sprintf(request, "%d %d %d %llu", GET_GROUP_ID_INDEX_OP, host_id_index, gid, members);
+    sprintf(request, "%d %d %d %llx", GET_GROUP_ID_INDEX_OP, host_id_index, gid, members);
     write_request(request);
     read_response(response);
 

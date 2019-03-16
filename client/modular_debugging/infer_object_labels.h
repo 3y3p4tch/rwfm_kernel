@@ -3,7 +3,6 @@
 
 #include "database_queries.h"
 #include "user_set_manipulation_functions.h"
-#include <sys/stat.h>
 
 USER_SET get_all_users(int number_of_users) {
     USER_SET ans = 1;

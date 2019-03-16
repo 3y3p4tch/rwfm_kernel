@@ -148,7 +148,7 @@ int do_operation(int operation, char **req_args, int num_args) {
             GROUP_ID group_id_add;
             group_id_add.host_id_index = strtol(req_args[1], NULL, 10);
             group_id_add.gid = strtol(req_args[2], NULL, 10);
-            group_id_add.members = strtoull(req_args[3], NULL, 10);
+            group_id_add.members = strtoull(req_args[3], NULL, 16);
             sprintf(response, "%d", add_group_id(group_id_add));
             write_response(response);
             break;
@@ -169,7 +169,7 @@ int do_operation(int operation, char **req_args, int num_args) {
             if(num_args != 2)
                 return -1;
             int group_id_index = strtol(req_args[1], NULL, 10);
-            sprintf(response, "%llu", get_members_from_group_id(group_id_index));
+            sprintf(response, "%llx", get_members_from_group_id(group_id_index));
             write_response(response);
             break;
         }
@@ -206,8 +206,8 @@ int do_operation(int operation, char **req_args, int num_args) {
             OBJECT object_add;
             object_add.obj_id_index = strtol(req_args[1], NULL, 10);
             object_add.owner = strtol(req_args[2], NULL, 10);
-            object_add.readers = strtoull(req_args[3], NULL, 10);
-            object_add.writers = strtoull(req_args[4], NULL, 10);
+            object_add.readers = strtoull(req_args[3], NULL, 16);
+            object_add.writers = strtoull(req_args[4], NULL, 16);
             sprintf(response, "%d", add_object(object_add));
             write_response(response);
             break;
@@ -221,7 +221,7 @@ int do_operation(int operation, char **req_args, int num_args) {
             if(obj_index == -1)
                 return -2;
             OBJECT obj = all_objects[obj_index];
-            sprintf(response, "%u %llu %llu",obj.owner,obj.readers,obj.writers);
+            sprintf(response, "%u %llx %llx",obj.owner,obj.readers,obj.writers);
             write_response(response);
             break;
         }
@@ -230,8 +230,8 @@ int do_operation(int operation, char **req_args, int num_args) {
             if(num_args != 4)
                 return -1;
             int update_obj_id = strtol(req_args[1], NULL, 10);
-            USER_SET new_obj_readers = strtoull(req_args[2], NULL, 10);
-            USER_SET new_obj_writers = strtoull(req_args[3], NULL, 10);
+            USER_SET new_obj_readers = strtoull(req_args[2], NULL, 16);
+            USER_SET new_obj_writers = strtoull(req_args[3], NULL, 16);
             sprintf(response, "%d", update_object_label(update_obj_id, new_obj_readers, new_obj_writers));
             write_response(response);
             break;
@@ -269,8 +269,8 @@ int do_operation(int operation, char **req_args, int num_args) {
             SUBJECT subject_add;
             subject_add.sub_id_index = strtol(req_args[1], NULL, 10);
             subject_add.owner = strtol(req_args[2], NULL, 10);
-            subject_add.readers = strtoull(req_args[3], NULL, 10);
-            subject_add.writers = strtoull(req_args[4], NULL, 10);
+            subject_add.readers = strtoull(req_args[3], NULL, 16);
+            subject_add.writers = strtoull(req_args[4], NULL, 16);
             sprintf(response, "%d", add_subject(subject_add));
             write_response(response);
             break;
@@ -284,7 +284,7 @@ int do_operation(int operation, char **req_args, int num_args) {
             if(sub_index == -1)
                 return -2;
             SUBJECT sub = all_subjects[sub_index];
-            sprintf(response, "%u %llu %llu",sub.owner,sub.readers,sub.writers);
+            sprintf(response, "%u %llx %llx",sub.owner,sub.readers,sub.writers);
             write_response(response);
             break;
         }
@@ -293,8 +293,8 @@ int do_operation(int operation, char **req_args, int num_args) {
             if(num_args != 4)
                 return -1;
             int update_sub_id = strtol(req_args[1], NULL, 10);
-            USER_SET new_sub_readers = strtoull(req_args[2], NULL, 10);
-            USER_SET new_sub_writers = strtoull(req_args[3], NULL, 10);
+            USER_SET new_sub_readers = strtoull(req_args[2], NULL, 16);
+            USER_SET new_sub_writers = strtoull(req_args[3], NULL, 16);
             sprintf(response, "%d", update_subject_label(update_sub_id, new_sub_readers, new_sub_writers));
             write_response(response);
             break;
@@ -311,8 +311,8 @@ int do_operation(int operation, char **req_args, int num_args) {
 			socket_add.ip = strtoul(req_args[3], NULL, 10);
 			socket_add.port = strtol(req_args[4], NULL, 10);
             socket_add.owner = strtol(req_args[5], NULL, 10);
-            socket_add.readers = strtoull(req_args[6], NULL, 10);
-            socket_add.writers = strtoull(req_args[7], NULL, 10);
+            socket_add.readers = strtoull(req_args[6], NULL, 16);
+            socket_add.writers = strtoull(req_args[7], NULL, 16);
             sprintf(response, "%d", add_socket(socket_add));
             write_response(response);
             break;
@@ -354,7 +354,7 @@ int do_operation(int operation, char **req_args, int num_args) {
                 return -1;
             int socket_index = strtol(req_args[1], NULL, 10);
             SOCKET_OBJECT sock = all_sockets[socket_index];
-            sprintf(response, "%u %llu %llu",sock.owner,sock.readers,sock.writers);
+            sprintf(response, "%u %llx %llx",sock.owner,sock.readers,sock.writers);
             write_response(response);
             break;
         }
@@ -363,8 +363,8 @@ int do_operation(int operation, char **req_args, int num_args) {
             if(num_args != 4)
                 return -1;
             int socket_index = strtol(req_args[1], NULL, 10);
-            USER_SET readers = strtoull(req_args[2], NULL, 10);
-            USER_SET writers = strtoull(req_args[3], NULL, 10);
+            USER_SET readers = strtoull(req_args[2], NULL, 16);
+            USER_SET writers = strtoull(req_args[3], NULL, 16);
             sprintf(response, "%d", update_socket_label(socket_index, readers, writers));
             write_response(response);
             break;
@@ -466,8 +466,10 @@ int start_server() {
         int operation = strtol(req_args[0], NULL, 10);
         int ret = do_operation(operation, req_args, num_args);
         printf("Operation result:%d\n\n",ret);
-        if(ret!=0)
+        if(ret!=0) {
+			printf("Stopping database server!\n\n");
             return ret;
+		}
     }
 }
 

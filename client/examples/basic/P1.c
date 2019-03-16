@@ -33,7 +33,7 @@ main(int argc, char *argv[]){
         buf[n]='\0';
         printf("%s\n", buf);
         printf("\nRead done.");
-        close(fd1);
+        // close(fd1);
     }
 
     getchar();
@@ -47,7 +47,7 @@ main(int argc, char *argv[]){
 			printf("\nWrite failed!\n");
 			exit(1);
 		}
-        close(fd2);
+        // close(fd2);
         printf("\nWrite done.");
     }
     getchar();

@@ -4,13 +4,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "underlying_libc_functions.h"
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include "database_macros.h"
 #include "database_model.h"
-
-#define	O_RDONLY	0x0000		/* open for reading only */
-#define	O_WRONLY	0x0001		/* open for writing only */
-#define	O_RDWR		0x0002		/* open for reading and writing */
 
 //Converting space seperated request string into arguments array
 int get_args_from_request(char **args, char *req) {
@@ -27,17 +25,17 @@ int get_args_from_request(char **args, char *req) {
 
 
 int read_response(char *res) {
-    int read_fifo_fd = underlying_open(RESPONSE_FIFO_PATH, O_RDONLY);
-    int ret = underlying_read(read_fifo_fd, res, MAX_REQUEST_LENGTH);
-    underlying_close(read_fifo_fd);
+    int read_fifo_fd = open(RESPONSE_FIFO_PATH, O_RDONLY);
+    int ret = read(read_fifo_fd, res, MAX_REQUEST_LENGTH);
+    close(read_fifo_fd);
     return ret;
 }
 
 
 int write_request(char *req) {
-    int write_fifo_fd = underlying_open(REQUEST_FIFO_PATH, O_WRONLY);
-    int ret = underlying_write(write_fifo_fd, req, strlen(req)+1);
-    underlying_close(write_fifo_fd);
+    int write_fifo_fd = open(REQUEST_FIFO_PATH, O_WRONLY);
+    int ret = write(write_fifo_fd, req, strlen(req)+1);
+    close(write_fifo_fd);
     return ret;
 }
 
@@ -103,7 +101,7 @@ int get_number_of_users() {
 
 int add_group_id(int host_id_index, int gid, unsigned long long int member_set) {
     char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
-    sprintf(request, "%d %d %d %llx", ADD_GROUP_ID_OP, host_id_index, gid, member_set);
+    sprintf(request, "%d %d %d %llu", ADD_GROUP_ID_OP, host_id_index, gid, member_set);
     write_request(request);
     read_response(response);
 
@@ -149,7 +147,7 @@ int get_object_id_index(int host_id_index, int device_id, int inode_num) {
 
 int add_object(int obj_id_index, int owner, unsigned long long readers, unsigned long long writers) {
     char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
-    sprintf(request, "%d %d %d %llx %llx", ADD_OBJECT_OP, obj_id_index, owner, readers, writers);
+    sprintf(request, "%d %d %d %llu %llu", ADD_OBJECT_OP, obj_id_index, owner, readers, writers);
     write_request(request);
     read_response(response);
 
@@ -173,7 +171,7 @@ OBJECT get_object(int obj_id_index) {
 
 int update_object_label(int obj_id_index, unsigned long long readers, unsigned long long writers) {
     char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
-    sprintf(request, "%d %d %llx %llx", UPDATE_OBJECT_LABEL_OP, obj_id_index, readers, writers);
+    sprintf(request, "%d %d %llu %llu", UPDATE_OBJECT_LABEL_OP, obj_id_index, readers, writers);
     write_request(request);
     read_response(response);
 
@@ -201,7 +199,7 @@ int get_subject_id_index(int host_id_index, int uid, int pid) {
 
 int add_subject(int sub_id_index, int owner, unsigned long long readers, unsigned long long writers) {
     char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
-    sprintf(request, "%d %d %d %llx %llx", ADD_SUBJECT_OP, sub_id_index, owner, readers, writers);
+    sprintf(request, "%d %d %d %llu %llu", ADD_SUBJECT_OP, sub_id_index, owner, readers, writers);
     write_request(request);
     read_response(response);
 
@@ -225,7 +223,7 @@ SUBJECT get_subject(int sub_id_index) {
 
 int update_subject_label(int sub_id_index, unsigned long long readers, unsigned long long writers) {
     char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
-    sprintf(request, "%d %d %llx %llx", UPDATE_SUBJECT_LABEL_OP, sub_id_index, readers, writers);
+    sprintf(request, "%d %d %llu %llu", UPDATE_SUBJECT_LABEL_OP, sub_id_index, readers, writers);
     write_request(request);
     read_response(response);
 
@@ -235,7 +233,7 @@ int update_subject_label(int sub_id_index, unsigned long long readers, unsigned 
 
 int add_socket(uint sub_id_index, uint sock_fd, ulong ip, uint port, uint owner, USER_SET readers, USER_SET writers) {
     char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
-    sprintf(request, "%d %u %u %lu %u %u %llx %llx", ADD_SOCKET_OP, sub_id_index, sock_fd, ip, port, owner, readers, writers);
+    sprintf(request, "%d %u %u %lu %u %u %llu %llu", ADD_SOCKET_OP, sub_id_index, sock_fd, ip, port, owner, readers, writers);
     write_request(request);
     read_response(response);
 
@@ -286,7 +284,7 @@ SOCKET_OBJECT get_socket(int socket_index) {
 
 int update_socket_label(int socket_index, USER_SET readers, USER_SET writers) {
     char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
-    sprintf(request, "%d %d %llx %llx", UPDATE_SOCKET_LABEL_OP, socket_index, readers, writers);
+    sprintf(request, "%d %d %llu %llu", UPDATE_SOCKET_LABEL_OP, socket_index, readers, writers);
     write_request(request);
     read_response(response);
 

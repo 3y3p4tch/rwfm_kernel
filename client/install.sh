@@ -6,43 +6,6 @@ export HOSTNAME=`hostname`
 export ADD_USER=0
 export ADD_GROUP=1
 
-update_users(){
-    for i in `perl -T -w list_users_and_groups.pl ${ADD_USER}`
-    do
-        data="{ \"hostid\" : \"${HOSTNAME}\", \"uid\" : \"${i}\" }"
-        echo $data
-#        curl -H "Content-type: application/json" -X POST -d "$data" "$user_url" && echo "${i} : user added" || echo "${i} : user add failed"
-        ./add_users_and_groups ${ADD_USER} ${HOSTNAME} ${i}
-    done
-}
-
-update_groups(){
-    for g in `cat /etc/group | awk -F: '{print $3}'`
-    do
-        members=
-        for u in `grep -w $g /etc/group | awk -F: '{print $4}'|sed -e 's/,/ /g'`
-        do
-            if [[ $members ]]
-            then
-                members="$members "`id -u $u`
-            else
-                members=`id -u $u`
-            fi
-        done
-
-        if [[ ! $members ]]
-        then
-            members=`grep -w $g /etc/passwd | awk -F: '{print $3}'`
-        fi
-
-        data="{ \"hostid\" : \"${HOSTNAME}\", \"gid\" : \"${g}\", \"members\" : \"${members}\" }"
-        echo $data
-        #curl -H "Content-type: application/json" -X POST -d "$data" "$group_url" && echo "${i} : group added" || echo "${i} : group add failed"
-        ./add_users_and_groups ${ADD_GROUP} ${HOSTNAME} ${g} ${members}
-    done
-}
-
-
 #
 # Main starts here..
 #
@@ -70,12 +33,12 @@ make || {
 echo "library built"
 
 mkdir -p /lib/secos/
-cp preload.so /lib/secos/
+cp -f preload.so /lib/secos/
 echo "library copied"
 
 mkdir -p /opt/secos/bin/
 #cp daemon.py rwfmd.py rwfm secure_shell /opt/secos/bin/
-cp database_server secure_shell enable_rwfm /opt/secos/bin/
+cp -f database_server secure_shell enable_rwfm /opt/secos/bin/
 chmod +x /opt/secos/bin/*
 #cp rwfmd.cfg /etc/
 
