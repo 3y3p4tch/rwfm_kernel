@@ -1,3 +1,10 @@
+/*
+This file contains all the functions to communicate with the database server. database_queries make a named fifo with the database_server. When database_queries receives 
+database operation request either from 'add_users_and_groups' or 'rule_engine', it checks the request and sends the request using the proper function for that 
+request to the database_server via the fifo. And after getting back the response from the database_server it sends back the response to the rule_engine.
+
+*/
+
 #ifndef _DB_QUERIES_H_
 #define _DB_QUERIES_H_
 

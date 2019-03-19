@@ -2,7 +2,9 @@
 #
 # Lists members of all groups, or optionally just the group
 # specified on the command line
-#
+# and sends them to the add_users_and_groups as command line arguments.
+
+
 # Copyright © 2010-2013 by Zed Pobre (zed@debian.org or zed@resonant.org)
 #
 # Permission to use, copy, modify, and/or distribute this software for any

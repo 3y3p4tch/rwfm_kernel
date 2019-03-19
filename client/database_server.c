@@ -1,3 +1,9 @@
+/*
+This is the main database server file. The server runs infinitely and listens for requests made at the read end of the fifo. Then it extracts the parameters from the 
+requet,checks which database operation needs to be done and executes it using the 'database_helper_functions'. And finally writes back the response to the fifo.
+
+*/
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>

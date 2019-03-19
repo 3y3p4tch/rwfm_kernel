@@ -1,3 +1,9 @@
+/*
+All the libc calls for file system,sockets,pipe etc are channelized to preload. This preload library communicates with the rwfm rule_engine for an below mentioned
+function call to check whether the function call should be allowed or not in the rwfm context and gets back the result from the rule_engine. If it's allowed preload calls
+the actual libc call for that function using the 'underlying_libc_functions.h'. Otherwise preload will deny the function call.
+*/
+
 #include <unistd.h>
 #include <sys/types.h>
 #include <stdio.h>
