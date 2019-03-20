@@ -1,3 +1,5 @@
+//All the database operations have been given a unique id and we have stored them as macros in this file.
+
 #ifndef _DB_MACROS_H_
 #define _DB_MACROS_H_
 

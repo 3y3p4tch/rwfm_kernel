@@ -1,8 +1,10 @@
 #!/usr/bin/perl
 #
-# Lists members of all groups, or optionally just the group
-# specified on the command line
-#
+# Lists members of all users, all groups, or optionally just the group
+# specified on the command line.
+# Invokes add_users_and_groups with extracted user or group as command line arguments.
+
+
 # Copyright © 2010-2013 by Zed Pobre (zed@debian.org or zed@resonant.org)
 #
 # Permission to use, copy, modify, and/or distribute this software for any

@@ -1,3 +1,8 @@
+/*
+This file includes all the functions which performs all user set based functions using bit manipulation. Functions like union,intersection of user sets,removing/adding
+a user from a user_set, checking whether a user is present in a user_set etc have been implemented here.
+*/
+
 #ifndef _USER_SET_MANIPULATION_FUN_H_
 #define _USER_SET_MANIPULATION_FUN_H_
 

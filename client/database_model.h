@@ -1,3 +1,7 @@
+/*
+This file contains all the structures for all the objects which we keep in our database
+*/
+
 #ifndef _DB_MODEL_
 #define _DB_MODEL_
 
@@ -5,6 +9,7 @@ typedef unsigned long long int USER_SET;
 typedef char * HOST;
 typedef unsigned int uint;
 typedef unsigned long ulong;
+
 
 typedef struct user_id {
     uint uid;

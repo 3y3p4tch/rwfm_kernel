@@ -1,3 +1,7 @@
+#This make file compiles necessary c files which needs to be run at the beginning. The files are the database_server.c for the database server \
+add_users_and_groups.c for adding the existing users and groups, enable_rwfm.c for enabling the RWFM monitor. \
+This make file also compiles the preload.c and sets it as the alternative for the shared libc calls. 
+
 DL=`ldd /bin/ls | grep "libdl.so" | awk '{ print $$3 }'`
 LIBC=`ldd /bin/ls | grep "libc.so" | awk '{ print $$3 }'`
 DEBUG=1

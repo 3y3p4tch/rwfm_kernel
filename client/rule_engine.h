@@ -1,3 +1,9 @@
+/*
+This is the RWFM rule engine. The preload library calls the functions mentioned here to check for the rwfm rules. The rwfm rule engine in turn communnicates with 
+the database_server using the database_queries.c to infer the labels of all the subjects(users,groups) and the objects. Then it checks whether the rwfm rule is satisfied 
+for that particular operation using the functioned mentioned in 'user_set_manipulation_functions'. If the operation is allowed it sends true else false to preload.. 
+*/
+
 #ifndef _RULE_ENGINE_H_
 #define _RULE_ENGINE_H_
 

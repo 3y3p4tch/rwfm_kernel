@@ -1,3 +1,10 @@
+/*
+This file communicates with the database server using fifo path and adds new users and groups which it gets as arguments,
+to the database.
+add_users_and_groups communicates with the database_server using named pipe.It writes the request for adding user or groups to the database
+at the write end the of the pipe using the 'write_request' function. And get the response back by using the 'read_response' function.
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
