@@ -403,6 +403,16 @@ int do_operation(int operation, char **req_args, int num_args) {
             write_response(response);
             break;
         }
+        case REMOVE_FD_MAPPING_OP:
+        {
+            if(num_args != 3)
+                return -1;
+            int sub_id_ind = strtol(req_args[1], NULL, 10);
+            int fd_obj = strtol(req_args[2], NULL, 10);
+            sprintf(response, "%d", remove_fd_map(sub_id_ind, fd_obj));
+            write_response(response);
+            break;
+        }
 
 
 		case ADD_NEW_CONNECTION_MAP_OP:

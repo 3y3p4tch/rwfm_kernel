@@ -22,7 +22,7 @@ main(int argc, char *argv[]){
         exit(1);
     }else{
         n = write(fd2, buf, n);
-        // close(fd2);
+        close(fd2);
         printf("\nWrite done.");
     }
     getchar();

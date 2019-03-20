@@ -8,7 +8,7 @@
 void debuglog(char *log) {
     int logfd = underlying_open("/tmp/preload.log", 02000|02);
     underlying_write(logfd, log, strlen(log));
-    close(logfd);
+    underlying_close(logfd);
 }
 
 pid_t fork(void) {
@@ -182,4 +182,16 @@ ssize_t recv(int sockfd, void *buf, size_t len, int flags) {
 	}
 
 	return ret;
+}
+
+int close(int fd) {
+    char host_name[1024];
+    sprintf(host_name, HOSTNAME);
+    struct stat file_info;
+    if(fstat(fd, &file_info) == -1)
+        return -1;
+    if((file_info.st_mode & S_IFMT) == S_IFREG)
+        file_close_check(host_name, getuid(), getpid(), fd);
+
+    return underlying_close(fd);
 }

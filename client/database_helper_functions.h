@@ -352,6 +352,19 @@ int get_sub_id_index_from_obj_id_and_fd(uint obj_id_index, uint fd) {
     return -1;
 }
 
+int remove_fd_map(uint sub_id_index, uint fd) {
+    for(int i=0;i<num_fd_maps;i++) {
+        if(fd_map[i].sub_id_index == sub_id_index && fd_map[i].fd == fd) {
+            for(int j=i;j<num_fd_maps-1;j++)
+                fd_map[j] = fd_map[j+1];
+            fd_map = (FD_MAP *)realloc(fd_map, (--num_fd_maps) * sizeof(FD_MAP));
+            return num_fd_maps;
+        }
+    }
+
+    return -1;
+}
+
 extern int num_connection_maps;
 extern CONNECTION_MAP * connection_map;
 

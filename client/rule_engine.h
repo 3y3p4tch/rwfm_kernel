@@ -92,6 +92,13 @@ int file_write_check(char * host_name, int uid, int pid, int fd) {
     return 0;
 }
 
+int file_close_check(char * host_name, int uid, int pid, int fd) {
+    int host_id_index = get_host_index(host_name);
+    int sub_id_index = get_subject_id_index(host_id_index, uid, pid);
+
+    return remove_fd_mapping(sub_id_index, fd);
+}
+
 int socket_check(char * host_name, int uid, int pid, int sock_fd) {
 	int host_id_index = get_host_index(host_name);
     int sub_id_index = get_subject_id_index(host_id_index, uid, pid);

@@ -321,6 +321,15 @@ int get_sub_id_index_from_fd_map(int obj_id_index, int fd) {
     return strtol(response, NULL, 10);
 }
 
+int remove_fd_mapping(int sub_id_index, int fd) {
+    char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
+    sprintf(request, "%d %d %d", REMOVE_FD_MAPPING_OP, sub_id_index, fd);
+    write_request(request);
+    read_response(response);
+
+    return strtol(response, NULL, 10);
+}
+
 
 int add_new_connection_map(int sock_index_1) {
     char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
