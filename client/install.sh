@@ -3,7 +3,6 @@
 #them the proper permissions. It creates two fifo's request_fifo and response_fifo for communication with the database server and starts the database server.
 #finally it runs the perl script list_users_and_groups.pl.
 
-
 export USE_RWFM=0
 export hexNum=`hostid`
 export HOSTID=`printf "%d" 0x${hexNum}`
@@ -31,7 +30,9 @@ export ADD_GROUP=1
 #echo $user_url
 
 #Deleting old files generated
-rm -f preload.so preload.h database_server
+rm -fr preload.so preload.h database_server /tmp/request_fifo /tmp/response_fifo /lib/secos /opt/secos
+unlink /dev/shm/sem.database_semaphore
+./create_macro_file.sh
 make || {
         echo "failed to build preload library."
         exit 1
@@ -48,7 +49,7 @@ cp -f database_server secure_shell enable_rwfm /opt/secos/bin/
 chmod +x /opt/secos/bin/*
 #cp rwfmd.cfg /etc/
 
-export PATH=$PATH:/opt/secos/bin/
+export PATH=/opt/secos/bin/:$PATH
 
 mkfifo /tmp/request_fifo
 mkfifo /tmp/response_fifo

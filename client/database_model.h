@@ -51,8 +51,8 @@ typedef struct subject {
 typedef struct socket_object {
 	uint sub_id_index;
 	uint sock_fd;
-	ulong ip;
-	uint port;
+	ulong src_ip, dstn_ip;
+	uint src_port, dstn_port;
     uint owner;
     USER_SET readers;
     USER_SET writers; 
@@ -63,10 +63,4 @@ typedef struct file_descriptor_map {
     uint obj_id_index;
     uint fd;
 } FD_MAP;
-
-typedef struct connection_map {
-	uint sock_index_1;
-	uint sock_index_2;
-} CONNECTION_MAP;
-
 #endif

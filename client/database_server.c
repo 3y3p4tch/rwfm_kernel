@@ -43,9 +43,6 @@ SOCKET_OBJECT * all_sockets = NULL;
 int num_fd_maps = 0;
 FD_MAP * fd_map = NULL;
 
-int num_connection_maps = 0;
-CONNECTION_MAP * connection_map = NULL;
-
 int read_request(char *req) {
     int read_fifo_fd = open(REQUEST_FIFO_PATH, O_RDONLY);
     int ret = read(read_fifo_fd, req, MAX_REQUEST_LENGTH);
@@ -309,28 +306,41 @@ int do_operation(int operation, char **req_args, int num_args) {
 
 		case ADD_SOCKET_OP:
 		{
-			if(num_args != 8)
+			if(num_args != 10)
                 return -1;
             SOCKET_OBJECT socket_add;
             socket_add.sub_id_index = strtol(req_args[1], NULL, 10);
 			socket_add.sock_fd = strtol(req_args[2], NULL, 10);
-			socket_add.ip = strtoul(req_args[3], NULL, 10);
-			socket_add.port = strtol(req_args[4], NULL, 10);
-            socket_add.owner = strtol(req_args[5], NULL, 10);
-            socket_add.readers = strtoull(req_args[6], NULL, 16);
-            socket_add.writers = strtoull(req_args[7], NULL, 16);
+			socket_add.src_ip = strtoul(req_args[3], NULL, 10);
+			socket_add.src_port = strtol(req_args[4], NULL, 10);
+			socket_add.dstn_ip = strtoul(req_args[5], NULL, 10);
+			socket_add.dstn_port = strtol(req_args[6], NULL, 10);
+            socket_add.owner = strtol(req_args[7], NULL, 10);
+            socket_add.readers = strtoull(req_args[8], NULL, 16);
+            socket_add.writers = strtoull(req_args[9], NULL, 16);
             sprintf(response, "%d", add_socket(socket_add));
             write_response(response);
             break;
 		}
-		case UPDATE_SOCKET_IP_PORT_OP:
+		case UPDATE_SOCKET_SRC_IP_PORT_OP:
 		{
 			if(num_args != 4)
                 return -1;
             int socket_index = strtol(req_args[1], NULL, 10);
 			ulong ip = strtoul(req_args[2], NULL, 10);
 			uint port = strtoul(req_args[3], NULL, 10);
-            sprintf(response, "%d", update_socket_ip_port(socket_index, ip, port));
+            sprintf(response, "%d", update_socket_src_ip_port(socket_index, ip, port));
+            write_response(response);
+            break;
+		}
+        case UPDATE_SOCKET_DSTN_IP_PORT_OP:
+		{
+			if(num_args != 4)
+                return -1;
+            int socket_index = strtol(req_args[1], NULL, 10);
+			ulong ip = strtoul(req_args[2], NULL, 10);
+			uint port = strtoul(req_args[3], NULL, 10);
+            sprintf(response, "%d", update_socket_dstn_ip_port(socket_index, ip, port));
             write_response(response);
             break;
 		}
@@ -346,11 +356,13 @@ int do_operation(int operation, char **req_args, int num_args) {
 		}
 		case GET_SOCKET_INDEX_FROM_IP_PORT_OP:
 		{
-			if(num_args != 3)
+			if(num_args != 5)
                 return -1;
-			ulong ip = strtoul(req_args[1], NULL, 10);
-            uint port = strtoul(req_args[2], NULL, 10);
-            sprintf(response, "%d", get_socket_index_from_ip_port(ip, port));
+			ulong src_ip = strtoul(req_args[1], NULL, 10);
+            uint src_port = strtoul(req_args[2], NULL, 10);
+			ulong dstn_ip = strtoul(req_args[3], NULL, 10);
+            uint dstn_port = strtoul(req_args[4], NULL, 10);
+            sprintf(response, "%d", get_socket_index_from_ip_port(src_ip, src_port, dstn_ip, dstn_port));
             write_response(response);
             break;
 		}
@@ -372,6 +384,25 @@ int do_operation(int operation, char **req_args, int num_args) {
             USER_SET readers = strtoull(req_args[2], NULL, 16);
             USER_SET writers = strtoull(req_args[3], NULL, 16);
             sprintf(response, "%d", update_socket_label(socket_index, readers, writers));
+            write_response(response);
+            break;
+        }
+        case GET_PEER_SOCKET_INDEX_OP:
+		{
+			if(num_args != 2)
+                return -1;
+			int sock_index = strtol(req_args[1], NULL, 10);
+			sprintf(response, "%d", get_peer_socket_index(sock_index));
+            write_response(response);
+			break;
+		}
+        case REMOVE_SOCKET_OP:
+        {
+            if(num_args != 3)
+                return -1;
+            int sub_id_ind = strtol(req_args[1], NULL, 10);
+            int sock_fd = strtol(req_args[2], NULL, 10);
+            sprintf(response, "%d", remove_socket(sub_id_ind, sock_fd));
             write_response(response);
             break;
         }
@@ -419,36 +450,6 @@ int do_operation(int operation, char **req_args, int num_args) {
             write_response(response);
             break;
         }
-
-
-		case ADD_NEW_CONNECTION_MAP_OP:
-        {
-            if(num_args != 2)
-                return -1;
-            int sock_index_1 = strtol(req_args[1], NULL, 10);
-            sprintf(response, "%d", add_new_connection_map(sock_index_1));
-            write_response(response);
-            break;
-        }		
-		case UPDATE_CONNECTION_MAP_SOCK_INDEX_2_OP:
-		{
-			if(num_args != 3)
-                return -1;
-			int sock_index_1 = strtol(req_args[1], NULL, 10);
-			int sock_index_2 = strtol(req_args[2], NULL, 10);
-			sprintf(response, "%d", update_connection_map_sock_index_2(sock_index_1, sock_index_2));
-            write_response(response);
-			break;
-		}
-		case GET_PEER_SOCKET_INDEX_OP:
-		{
-			if(num_args != 2)
-                return -1;
-			int sock_index = strtol(req_args[1], NULL, 10);
-			sprintf(response, "%d", get_peer_socket_index(sock_index));
-            write_response(response);
-			break;
-		}
 
 
         case COPY_SUBJECT_FDS_OP:

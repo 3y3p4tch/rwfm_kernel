@@ -66,7 +66,6 @@ int file_read_check(char * host_name, int uid, int pid, int fd) {
     SUBJECT subject = get_subject(sub_id_index);
     OBJECT object = get_object(obj_id_index);
 	
-	printf("\nIn file_read_check: %d\t%llx\n\n", subject.owner, object.readers);
     if(is_user_in_set(subject.owner, &object.readers) == 1) {
         subject.readers = set_intersection(&subject.readers, &object.readers);
         subject.writers = set_union(&subject.writers, &object.writers);
@@ -111,7 +110,7 @@ int socket_check(char * host_name, int uid, int pid, int sock_fd) {
 	if(sub_id_index == -1)
 		return -1;
 	SUBJECT subject = get_subject(sub_id_index);
-	add_socket(sub_id_index, sock_fd, 0, 0, subject.owner, subject.readers, subject.writers);
+	add_socket(sub_id_index, sock_fd, 0, 0, 0, 0, subject.owner, subject.readers, subject.writers);
 
 	return 1;
 }
@@ -130,12 +129,12 @@ int bind_check(char * host_name, int uid, int pid, int sock_fd) {
 	int sock_index = get_socket_index_from_sub_id_sock_fd(sub_id_index, sock_fd);
 	if(sock_index == -1)
 		return -1;
-	update_socket_ip_port(sock_index, socket_addr.sin_addr.s_addr, socket_addr.sin_port);
+	update_socket_src_ip_port(sock_index, socket_addr.sin_addr.s_addr, socket_addr.sin_port);
 
 	return 1;
 }
 
-int connect_check(char * host_name, int uid, int pid, int sock_fd) {
+int connect_check(char * host_name, int uid, int pid, int sock_fd, struct sockaddr_in *peer_addr) {
 	int host_id_index = get_host_index(host_name);
     int sub_id_index = get_subject_id_index(host_id_index, uid, pid);
 	if(sub_id_index == -1)
@@ -143,42 +142,34 @@ int connect_check(char * host_name, int uid, int pid, int sock_fd) {
 	int sock_index = get_socket_index_from_sub_id_sock_fd(sub_id_index, sock_fd);
 	if(sock_index == -1)
 		return -1;
-	add_new_connection_map(sock_index);
+
+    struct sockaddr_in socket_addr;
+	socklen_t socket_addr_sz;
+	socket_addr_sz = sizeof socket_addr;
+	underlying_getsockname(sock_fd, (struct sockaddr *) &socket_addr, &socket_addr_sz);
+
+	update_socket_src_ip_port(sock_index, socket_addr.sin_addr.s_addr, socket_addr.sin_port);
+    update_socket_dstn_ip_port(sock_index, peer_addr->sin_addr.s_addr, peer_addr->sin_port);
 
 	return 1;
 }
 
 int accept_check(char * host_name, int uid, int pid, int sock_fd) {
 	int host_id_index = get_host_index(host_name);
-
-	printf("\n\nHOST ID IND: %d\n\n", host_id_index);
-
     int sub_id_index = get_subject_id_index(host_id_index, uid, pid);
-
-	printf("\n\nSubject ID IND: %d\n\n", sub_id_index);
-
 	if(sub_id_index == -1)
 		return -1;
 	SUBJECT subject = get_subject(sub_id_index);
-	printf("\n\nSubject FOUND\n\n");
 
 	struct sockaddr_in socket_addr, peer_addr;
 	socklen_t socket_addr_sz, peer_addr_sz;
 	socket_addr_sz = sizeof socket_addr;
 	peer_addr_sz = sizeof peer_addr;
+
 	underlying_getsockname(sock_fd, (struct sockaddr *) &socket_addr, &socket_addr_sz);
-	printf("\n\nCURSOCK FOUND\n\n");
 	underlying_getpeername(sock_fd, (struct sockaddr *) &peer_addr, &peer_addr_sz);
-	printf("\n\nPEERSOCK FOUND\n\n");
 
-	int sock_index = add_socket(sub_id_index, sock_fd, socket_addr.sin_addr.s_addr, socket_addr.sin_port, subject.owner, subject.readers, subject.writers);
-	printf("\n\nSOCK ADDED\n\n");
-	int peer_sock_index = get_socket_index_from_ip_port(peer_addr.sin_addr.s_addr, peer_addr.sin_port);
-
-	printf("\n\nPEER SOCK IND: %d\n\n", peer_sock_index);
-
-	update_connection_map_sock_index_2(peer_sock_index, sock_index);
-	printf("\n\nCONN MAP UPDATED\n\n");
+	int sock_index = add_socket(sub_id_index, sock_fd, socket_addr.sin_addr.s_addr, socket_addr.sin_port, peer_addr.sin_addr.s_addr, peer_addr.sin_port, subject.owner, subject.readers, subject.writers);
 
 	if(sock_index == -1)
 		return -1;
@@ -192,19 +183,13 @@ int send_check(char * host_name, int uid, int pid, int sock_fd) {
 	if(sub_id_index == -1)
 		return -1;
 
-	printf("\n\nSubject ID Found\n\n");
-
 	int sock_index = get_socket_index_from_sub_id_sock_fd(sub_id_index, sock_fd);
 	if(sock_index == -1)
 		return -1;
 
-	printf("\n\nCur Sock ID Found\n\n");
-
 	int peer_sock_index = get_peer_socket_index(sock_index);
 	if(peer_sock_index == -1)
 		return -1;
-
-	printf("\n\nPeer Sock ID Found\n\n");
 
 	SOCKET_OBJECT sock_obj = get_socket(sock_index);
 	SOCKET_OBJECT peer_sock_obj = get_socket(peer_sock_index);
@@ -251,6 +236,13 @@ int recv_check(char * host_name, int uid, int pid, int sock_fd) {
     }
 
 	return 0;
+}
+
+int socket_close_check(char * host_name, int uid, int pid, int fd) {
+    int host_id_index = get_host_index(host_name);
+    int sub_id_index = get_subject_id_index(host_id_index, uid, pid);
+
+    return remove_socket(sub_id_index, fd);
 }
 
 #endif

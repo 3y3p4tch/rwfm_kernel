@@ -272,8 +272,10 @@ int add_socket(SOCKET_OBJECT new_socket) {
 	all_sockets = (SOCKET_OBJECT *)realloc(all_sockets, (num_sockets+1) * sizeof(SOCKET_OBJECT));
     all_sockets[num_sockets].sub_id_index = new_socket.sub_id_index;
     all_sockets[num_sockets].sock_fd = new_socket.sock_fd;
-    all_sockets[num_sockets].port = new_socket.port;
-    all_sockets[num_sockets].ip = new_socket.ip;
+    all_sockets[num_sockets].src_ip = new_socket.src_ip;
+    all_sockets[num_sockets].src_port = new_socket.src_port;
+    all_sockets[num_sockets].dstn_ip = new_socket.dstn_ip;
+    all_sockets[num_sockets].dstn_port = new_socket.dstn_port;
     all_sockets[num_sockets].owner = new_socket.owner;
     all_sockets[num_sockets].readers = new_socket.readers;
     all_sockets[num_sockets].writers = new_socket.writers;
@@ -281,9 +283,16 @@ int add_socket(SOCKET_OBJECT new_socket) {
     return num_sockets++;
 }
 
-int update_socket_ip_port(int socket_index, ulong ip, uint port) {
-	all_sockets[socket_index].ip = ip;
-	all_sockets[socket_index].port = port;
+int update_socket_src_ip_port(int socket_index, ulong ip, uint port) {
+	all_sockets[socket_index].src_ip = ip;
+	all_sockets[socket_index].src_port = port;
+
+	return 0;
+}
+
+int update_socket_dstn_ip_port(int socket_index, ulong ip, uint port) {
+	all_sockets[socket_index].dstn_ip = ip;
+	all_sockets[socket_index].dstn_port = port;
 
 	return 0;
 }
@@ -296,9 +305,10 @@ int get_socket_index_from_sub_id_sock_fd(int sub_id_index, int sock_fd) {
 	return -1;
 }
 
-int get_socket_index_from_ip_port(ulong ip, uint port) {
+int get_socket_index_from_ip_port(ulong src_ip, uint src_port, ulong dstn_ip, uint dstn_port) {
 	for(int i=0;i<num_sockets;i++)
-		if(all_sockets[i].ip == ip && all_sockets[i].port == port)
+		if(all_sockets[i].src_ip == src_ip && all_sockets[i].src_port == src_port
+            && all_sockets[i].dstn_ip == dstn_ip && all_sockets[i].dstn_port == dstn_port)
 			return i;
 
 	return -1;
@@ -309,6 +319,30 @@ int update_socket_label(int socket_index, USER_SET readers, USER_SET writers) {
 	all_sockets[socket_index].writers = writers;
 
 	return 0;
+}
+
+int get_peer_socket_index(int sock_index) {
+	for(int i=0;i<num_sockets;i++) {
+		if(i != sock_index
+            && all_sockets[i].src_ip == all_sockets[sock_index].dstn_ip
+            && all_sockets[i].src_port == all_sockets[sock_index].dstn_port)
+			return i;
+	}
+
+	return -1;
+}
+
+int remove_socket(int sub_id_index, int sock_fd) {
+    for(int i=0;i<num_sockets;i++) {
+        if(all_sockets[i].sub_id_index == sub_id_index && all_sockets[i].sock_fd == sock_fd) {
+            for(int j=i;j<num_sockets-1;j++)
+                all_sockets[j] = all_sockets[j+1];
+            all_sockets = (SOCKET_OBJECT *)realloc(all_sockets, (--num_sockets) * sizeof(SOCKET_OBJECT));
+            return num_sockets;
+        }
+    }
+
+    return -1;
 }
 
 extern int num_fd_maps;
@@ -365,57 +399,32 @@ int remove_fd_map(uint sub_id_index, uint fd) {
     return -1;
 }
 
-extern int num_connection_maps;
-extern CONNECTION_MAP * connection_map;
-
-int add_new_connection_map(int sock_index_1) {
-	connection_map = (CONNECTION_MAP *)realloc(connection_map, (num_connection_maps+1) * sizeof(CONNECTION_MAP));
-	connection_map[num_connection_maps].sock_index_1 = sock_index_1;
-	connection_map[num_connection_maps].sock_index_2 = -1;
-
-	return num_connection_maps++;
-}
-
-int update_connection_map_sock_index_2(int sock_index_1, int sock_index_2) {
-	for(int i=0;i<num_connection_maps;i++) {
-		if(connection_map[i].sock_index_1 == sock_index_1)	{
-			connection_map[i].sock_index_2 = sock_index_2;
-			return 0;
-		}
-	}
-
-	return -1;
-}
-
-int get_peer_socket_index(int sock_index) {
-	for(int i=0;i<num_connection_maps;i++) {
-		if(connection_map[i].sock_index_1 == sock_index)
-			return connection_map[i].sock_index_2;
-		if(connection_map[i].sock_index_2 == sock_index)
-			return connection_map[i].sock_index_1;
-	}
-
-	return -1;
-}
-
 /*
 Description :   Copy all the information contained in source subject id to destination subject id.
                 The information include all the fds (file, pipe, socket, etc) opened by the source.
 Parameters  :   subject id index of source and destination subjects
 Return Value:   Always succeeds and returns 0.
 */
+
+void copy_fd_map(int new_sub_id, int old_fd_map_index) {
+    int new_map_index = add_new_mapping(fd_map[old_fd_map_index]);
+    fd_map[new_map_index].sub_id_index = new_sub_id;
+}
+
+void copy_socket(int new_sub_id, int old_socket_index) {
+    int new_socket_index = add_socket(all_sockets[old_socket_index]);
+    all_sockets[new_socket_index].sub_id_index = new_sub_id;
+}
+
 int copy_subject_info(uint src_sub_id_index, uint dstn_sub_id_index) {
     int fd_maps_to_copy[1024], num_fd_maps_to_copy = 0;
     for(int i=0;i<num_fd_maps;i++) {
         if(fd_map[i].sub_id_index == src_sub_id_index)
-            fd_maps_to_copy[num_fd_maps_to_copy++] = i;
+            copy_fd_map(dstn_sub_id_index, i);
     }
-    for(int i=0;i<num_fd_maps_to_copy;i++) {
-        FD_MAP new_map;
-        new_map.sub_id_index = dstn_sub_id_index;
-        new_map.obj_id_index = fd_map[fd_maps_to_copy[i]].obj_id_index;
-        new_map.fd = fd_map[fd_maps_to_copy[i]].fd;
-        add_new_mapping(new_map);
+    for(int i=0;i<num_sockets;i++) {
+        if(all_sockets[i].sub_id_index == src_sub_id_index)
+            copy_socket(dstn_sub_id_index, i);
     }
 
     return 0;

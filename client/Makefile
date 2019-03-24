@@ -4,11 +4,13 @@ This make file also compiles the preload.c and sets it as the alternative for th
 
 DL=`ldd /bin/ls | grep "libdl.so" | awk '{ print $$3 }'`
 LIBC=`ldd /bin/ls | grep "libc.so" | awk '{ print $$3 }'`
+LIBPTHREAD=`ldd /bin/ls | grep "libpthread.so" | awk '{ print $$3 }'`
 DEBUG=1
 HOSTNAME=`hostname`
 
 all: database_server.c add_users_and_groups.c preload.c
 	echo "#define LIBC \"${LIBC}\"" > preload.h
+	echo "#define LIBPTHREAD \"${LIBPTHREAD}\"" >> preload.h
 	echo "#define HOSTNAME \"${HOSTNAME}\"" >> preload.h
 	gcc database_server.c -o database_server
 	gcc add_users_and_groups.c -o add_users_and_groups
