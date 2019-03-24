@@ -11,7 +11,6 @@ request to the database_server via the fifo. And after getting back the response
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
 #include "underlying_libc_functions.h"
 #include "database_macros.h"
 #include "database_model.h"
@@ -22,20 +21,18 @@ request to the database_server via the fifo. And after getting back the response
 #define O_CREAT	0x0040      /* create file if it doesnt already exist */
 
 
-//For ensuring mutual exclusion
+//For ensuring mutual exclusion of database server access
 void lock() {
-    char sem_name[1024];
-    strcpy(sem_name, SEMAPHORE_NAME);
-    sem_t * sem_id = underlying_sem_open(sem_name, O_CREAT, 0600, 1);
-    if(sem_id == SEM_FAILED)
-        printf("Lock %d", errno);
+    mode_t prev_mask = umask(0);
+    sem_t * sem_id = underlying_sem_open(SEMAPHORE_NAME, O_CREAT, 0666, 1);
+    umask(prev_mask);
     underlying_sem_wait(sem_id);
 }
 
 void unlock() {
-    sem_t * sem_id = underlying_sem_open(SEMAPHORE_NAME, O_CREAT, 0600, 1);
-    if(sem_id == SEM_FAILED)
-        printf("UnLock %d", errno);
+    mode_t prev_mask = umask(0);
+    sem_t * sem_id = underlying_sem_open(SEMAPHORE_NAME, O_CREAT, 0666, 1);
+    umask(prev_mask);
     underlying_sem_post(sem_id);
 }
 

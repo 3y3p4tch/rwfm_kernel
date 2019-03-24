@@ -47,9 +47,10 @@ int main()
 	char port[10];
 	sprintf(port,"%u",ntohs(client_addr.sin_port));
 	strcat(buff,port);
-	send(connection_sockfd,buff,sizeof buff, 0);
-	close(connection_sockfd);
-	close(listen_sockfd);
+	if(send(connection_sockfd,buff,sizeof buff, 0) == -1)
+        printf("Send failed!\n");
+	//close(connection_sockfd);
+	//close(listen_sockfd);
 
 	return 0;
 }

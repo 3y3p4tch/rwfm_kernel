@@ -24,9 +24,11 @@ int main()
 
 	sockfd = socket(PF_INET, SOCK_STREAM, 0);
 	connect(sockfd, (struct sockaddr *) &server_addr, server_addr_sz);
-	recv(sockfd, buff, 1024, 0);
-	printf("Server said: %s",buff);
-	close(sockfd);
+	if(recv(sockfd, buff, 1024, 0)==-1)
+        printf("Receive failed!\n");
+    else
+	    printf("Server said: %s\n",buff);
+	//close(sockfd);
 
 	return 0;
 }
