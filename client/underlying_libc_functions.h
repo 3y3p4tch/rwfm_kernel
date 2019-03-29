@@ -14,14 +14,6 @@ void *get_libc() {
     return libc_handle;
 }
 
-void *get_libpthread() {
-    static void *libpthread_handle = 0;
-    if (!libpthread_handle) {
-        libpthread_handle = dlopen(LIBPTHREAD, RTLD_LAZY);
-    }
-    return libpthread_handle;
-}
-
 pid_t underlying_fork(void) {
     static pid_t (*underlying)(void) = 0;
     if (!underlying) {
@@ -124,30 +116,6 @@ int underlying_getpeername(int sockfd, struct sockaddr *addr, socklen_t *addrlen
         underlying = dlsym(get_libc(), "getpeername");
     }
     return (*underlying)(sockfd, addr, addrlen);
-}
-
-sem_t * underlying_sem_open(const char *name, int oflag, mode_t mode, unsigned int value) {
-    sem_t * (*underlying)(const char *, int, mode_t, unsigned int) = 0;
-    if (!underlying) {
-        underlying = dlsym(get_libpthread(), "sem_open");
-    }
-    return (*underlying)(name, oflag, mode, value);
-}
-
-int underlying_sem_wait(sem_t * sem) {
-    int (*underlying)(sem_t *) = 0;
-    if (!underlying) {
-        underlying = dlsym(get_libpthread(), "sem_wait");
-    }
-    return (*underlying)(sem);
-}
-
-int underlying_sem_post(sem_t * sem) {
-    int (*underlying)(sem_t *) = 0;
-    if (!underlying) {
-        underlying = dlsym(get_libpthread(), "sem_post");
-    }
-    return (*underlying)(sem);
 }
 
 #endif

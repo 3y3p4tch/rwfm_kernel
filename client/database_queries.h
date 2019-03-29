@@ -24,16 +24,16 @@ request to the database_server via the fifo. And after getting back the response
 //For ensuring mutual exclusion of database server access
 void lock() {
     mode_t prev_mask = umask(0);
-    sem_t * sem_id = underlying_sem_open(SEMAPHORE_NAME, O_CREAT, 0666, 1);
+    sem_t * sem_id = sem_open(SEMAPHORE_NAME, O_CREAT, 0666, 1);
     umask(prev_mask);
-    underlying_sem_wait(sem_id);
+    sem_wait(sem_id);
 }
 
 void unlock() {
     mode_t prev_mask = umask(0);
-    sem_t * sem_id = underlying_sem_open(SEMAPHORE_NAME, O_CREAT, 0666, 1);
+    sem_t * sem_id = sem_open(SEMAPHORE_NAME, O_CREAT, 0666, 1);
     umask(prev_mask);
-    underlying_sem_post(sem_id);
+    sem_post(sem_id);
 }
 
 
