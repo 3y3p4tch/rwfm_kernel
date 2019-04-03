@@ -14,7 +14,23 @@ for that particular operation using the functioned mentioned in 'user_set_manipu
 #include <stdio.h>
 #include "infer_object_labels.h"
 
+//For ensuring mutual exclusion of database server access
+void lock() {
+    mode_t prev_mask = umask(0);
+    sem_t * sem_id = sem_open(RULE_ENGINE_SEMAPHORE, O_CREAT, 0666, 1);
+    umask(prev_mask);
+    sem_wait(sem_id);
+}
+
+void unlock() {
+    mode_t prev_mask = umask(0);
+    sem_t * sem_id = sem_open(RULE_ENGINE_SEMAPHORE, O_CREAT, 0666, 1);
+    umask(prev_mask);
+    sem_post(sem_id);
+}
+
 void fork_check(char* host_name, int uid, int child_pid, int parent_pid) {
+	lock();
     int host_id_index = get_host_index(host_name);
     int parent_sub_id_index = get_subject_id_index(host_id_index, uid, parent_pid);
     int child_sub_id_index = add_subject_id(host_id_index, uid, child_pid);
@@ -31,9 +47,11 @@ void fork_check(char* host_name, int uid, int child_pid, int parent_pid) {
         int child_subject = add_subject(child_sub_id_index, parent_subject.owner, parent_subject.readers, parent_subject.writers);
         copy_subject_info(parent_sub_id_index, child_sub_id_index);
     }
+	unlock();
 }
 
 int open_check(char * host_name, struct stat * file_info, int fd, int uid, int pid){
+	lock();
     int host_id_index = get_host_index(host_name);
 	int subject_id_index = get_subject_id_index(host_id_index, uid, pid);
     int object_id_index = get_object_id_index(host_id_index, file_info->st_dev, file_info->st_ino);
@@ -50,118 +68,191 @@ int open_check(char * host_name, struct stat * file_info, int fd, int uid, int p
     }
 
 	add_fd_mapping(subject_id_index, object_id_index, fd);
+	unlock();
 
     return 1;
 }
 
 int file_read_check(char * host_name, int uid, int pid, int fd) {
+	lock();
     int host_id_index = get_host_index(host_name);
     int sub_id_index = get_subject_id_index(host_id_index, uid, pid);
     int obj_id_index = get_obj_id_index_from_fd_map(sub_id_index, fd);
+	int ret_val = 0;
 
     //If fd is not a file fd
     if(obj_id_index == -1)
-        return -1;
-
-    SUBJECT subject = get_subject(sub_id_index);
-    OBJECT object = get_object(obj_id_index);
+        ret_val = -1;
+	else {
+		SUBJECT subject = get_subject(sub_id_index);
+		OBJECT object = get_object(obj_id_index);
 	
-    if(is_user_in_set(subject.owner, &object.readers) == 1) {
-        subject.readers = set_intersection(&subject.readers, &object.readers);
-        subject.writers = set_union(&subject.writers, &object.writers);
-        update_subject_label(sub_id_index, subject.readers, subject.writers);
+		if(is_user_in_set(subject.owner, &object.readers) == 1) {
+		    subject.readers = set_intersection(&subject.readers, &object.readers);
+		    subject.writers = set_union(&subject.writers, &object.writers);
+		    update_subject_label(sub_id_index, subject.readers, subject.writers);
 
-        return 1;
-    }
+		    ret_val = 1;
+		}
+	}
+	unlock();
 
-    return 0;
+    return ret_val;
 }
 
 int file_write_check(char * host_name, int uid, int pid, int fd) {
+	lock();
     int host_id_index = get_host_index(host_name);
     int sub_id_index = get_subject_id_index(host_id_index, uid, pid);
     int obj_id_index = get_obj_id_index_from_fd_map(sub_id_index, fd);
+	int ret_val = 0;
 
     //If fd is not a file fd
     if(obj_id_index == -1)
-        return -1;
+        ret_val = -1;
+	else {
+		SUBJECT subject = get_subject(sub_id_index);
+		OBJECT object = get_object(obj_id_index);
 
-    SUBJECT subject = get_subject(sub_id_index);
-    OBJECT object = get_object(obj_id_index);
+		if(is_user_in_set(subject.owner, &object.writers)
+		    && is_superset_of(&subject.readers, &object.readers)
+		    && is_subset_of(&subject.writers, &object.writers))
+		    ret_val = 1;
+	}
+	unlock();
 
-    if(is_user_in_set(subject.owner, &object.writers)
-        && is_superset_of(&subject.readers, &object.readers)
-        && is_subset_of(&subject.writers, &object.writers))
-        return 1;
-
-    return 0;
+    return ret_val;
 }
 
 int file_close_check(char * host_name, int uid, int pid, int fd) {
+	lock();
     int host_id_index = get_host_index(host_name);
     int sub_id_index = get_subject_id_index(host_id_index, uid, pid);
 
-    return remove_fd_mapping(sub_id_index, fd);
-}
-
-int socket_check(char * host_name, int uid, int pid, int sock_fd) {
-	int host_id_index = get_host_index(host_name);
-    int sub_id_index = get_subject_id_index(host_id_index, uid, pid);
-	if(sub_id_index == -1)
-		return -1;
-	SUBJECT subject = get_subject(sub_id_index);
-	add_socket(sub_id_index, sock_fd, 0, 0, 0, 0, subject.owner, subject.readers, subject.writers);
-
-	return 1;
-}
-
-int bind_check(char * host_name, int uid, int pid, int sock_fd) {
-	int host_id_index = get_host_index(host_name);
-    int sub_id_index = get_subject_id_index(host_id_index, uid, pid);
-	if(sub_id_index == -1)
-		return -1;
-
-	struct sockaddr_in socket_addr;
-	socklen_t socket_addr_sz;
-	socket_addr_sz = sizeof socket_addr;
-	underlying_getsockname(sock_fd, (struct sockaddr *) &socket_addr, &socket_addr_sz);
-
-	int sock_index = get_socket_index_from_sub_id_sock_fd(sub_id_index, sock_fd);
-	if(sock_index == -1)
-		return -1;
-	update_socket_src_ip_port(sock_index, socket_addr.sin_addr.s_addr, socket_addr.sin_port);
-
-	return 1;
+    int ret_val = remove_fd_mapping(sub_id_index, fd);
+	unlock();
+	return ret_val;
 }
 
 int connect_check(char * host_name, int uid, int pid, int sock_fd, struct sockaddr_in *peer_addr) {
+	lock();
 	int host_id_index = get_host_index(host_name);
     int sub_id_index = get_subject_id_index(host_id_index, uid, pid);
+	int ret_val = 1;
 	if(sub_id_index == -1)
-		return -1;
-	int sock_index = get_socket_index_from_sub_id_sock_fd(sub_id_index, sock_fd);
-	if(sock_index == -1)
-		return -1;
+		ret_val = -1;
+	else {
+		SUBJECT subject = get_subject(sub_id_index);
 
-    struct sockaddr_in socket_addr;
-	socklen_t socket_addr_sz;
-	socket_addr_sz = sizeof socket_addr;
-	underlying_getsockname(sock_fd, (struct sockaddr *) &socket_addr, &socket_addr_sz);
+		struct sockaddr_in socket_addr;
+		socklen_t socket_addr_sz;
+		socket_addr_sz = sizeof socket_addr;
+		underlying_getsockname(sock_fd, (struct sockaddr *) &socket_addr, &socket_addr_sz);
 
-	update_socket_src_ip_port(sock_index, socket_addr.sin_addr.s_addr, socket_addr.sin_port);
-    update_socket_dstn_ip_port(sock_index, peer_addr->sin_addr.s_addr, peer_addr->sin_port);
+		add_connection(socket_addr.sin_addr.s_addr, socket_addr.sin_port, peer_addr->sin_addr.s_addr, peer_addr->sin_port, 1, sub_id_index, subject.readers, subject.writers);
+	}
+	unlock();
 
-	return 1;
+	return ret_val;
 }
 
 int accept_check(char * host_name, int uid, int pid, int sock_fd) {
+	lock();
 	int host_id_index = get_host_index(host_name);
     int sub_id_index = get_subject_id_index(host_id_index, uid, pid);
+	int ret_val = 1;
 	if(sub_id_index == -1)
-		return -1;
-	SUBJECT subject = get_subject(sub_id_index);
+		ret_val = -1;
+	else {
+		SUBJECT subject = get_subject(sub_id_index);
 
-	struct sockaddr_in socket_addr, peer_addr;
+		struct sockaddr_in socket_addr, peer_addr;
+		socklen_t socket_addr_sz, peer_addr_sz;
+		socket_addr_sz = sizeof socket_addr;
+		peer_addr_sz = sizeof peer_addr;
+
+		underlying_getsockname(sock_fd, (struct sockaddr *) &socket_addr, &socket_addr_sz);
+		underlying_getpeername(sock_fd, (struct sockaddr *) &peer_addr, &peer_addr_sz);
+
+		add_connection(socket_addr.sin_addr.s_addr, socket_addr.sin_port, peer_addr.sin_addr.s_addr, peer_addr.sin_port, 1, sub_id_index, subject.readers, subject.writers);
+	}
+	unlock();
+
+	return ret_val;
+}
+
+int send_check(char * host_name, int uid, int pid, int sock_fd) {
+	lock();
+	int host_id_index = get_host_index(host_name);
+    int sub_id_index = get_subject_id_index(host_id_index, uid, pid);
+	int ret_val = 1;
+	if(sub_id_index == -1)
+		ret_val = -1;
+	else {
+		struct sockaddr_in socket_addr, peer_addr;
+		socklen_t socket_addr_sz, peer_addr_sz;
+		socket_addr_sz = sizeof socket_addr;
+		peer_addr_sz = sizeof peer_addr;
+
+		underlying_getsockname(sock_fd, (struct sockaddr *) &socket_addr, &socket_addr_sz);
+		underlying_getpeername(sock_fd, (struct sockaddr *) &peer_addr, &peer_addr_sz);
+
+		int connection_index = get_connection_index(socket_addr.sin_addr.s_addr, socket_addr.sin_port, peer_addr.sin_addr.s_addr, peer_addr.sin_port);
+		if(connection_index == -1)
+			ret_val = -1;
+		else {
+			SOCKET_CONNECTION_OBJECT conn_obj = get_connection(connection_index);
+			SUBJECT subject = get_subject(sub_id_index);
+
+			if(conn_obj.readers != subject.readers || conn_obj.writers != subject.writers)
+				update_connection_label(connection_index, set_intersection(&subject.readers, &conn_obj.readers), set_union(&subject.writers, &conn_obj.writers));
+		}
+	}
+	unlock();
+	return ret_val;
+}
+
+int recv_check(char * host_name, int uid, int pid, int sock_fd) {
+	lock();
+	int host_id_index = get_host_index(host_name);
+    int sub_id_index = get_subject_id_index(host_id_index, uid, pid);
+	int ret_val = 0;
+	if(sub_id_index == -1)
+		ret_val = -1;
+	else {
+		struct sockaddr_in socket_addr, peer_addr;
+		socklen_t socket_addr_sz, peer_addr_sz;
+		socket_addr_sz = sizeof socket_addr;
+		peer_addr_sz = sizeof peer_addr;
+
+		underlying_getsockname(sock_fd, (struct sockaddr *) &socket_addr, &socket_addr_sz);
+		underlying_getpeername(sock_fd, (struct sockaddr *) &peer_addr, &peer_addr_sz);
+
+		int connection_index = get_connection_index(socket_addr.sin_addr.s_addr, socket_addr.sin_port, peer_addr.sin_addr.s_addr, peer_addr.sin_port);
+		if(connection_index == -1)
+			ret_val = -1;
+		else {
+			SOCKET_CONNECTION_OBJECT conn_obj = get_connection(connection_index);
+			SUBJECT subject = get_subject(sub_id_index);
+
+			if(is_user_in_set(subject.owner, &conn_obj.readers)) {
+				if(conn_obj.readers != subject.readers || conn_obj.writers != subject.writers)
+					update_subject_label(sub_id_index, set_intersection(&subject.readers, &conn_obj.readers), set_union(&subject.writers, &conn_obj.writers));
+
+				ret_val = 1;
+			}
+		}
+	}
+	unlock();
+	return ret_val;
+}
+
+int socket_close_check(char * host_name, int uid, int pid, int sock_fd) {
+	lock();
+	int host_id_index = get_host_index(host_name);
+    int sub_id_index = get_subject_id_index(host_id_index, uid, pid);
+
+    struct sockaddr_in socket_addr, peer_addr;
 	socklen_t socket_addr_sz, peer_addr_sz;
 	socket_addr_sz = sizeof socket_addr;
 	peer_addr_sz = sizeof peer_addr;
@@ -169,80 +260,9 @@ int accept_check(char * host_name, int uid, int pid, int sock_fd) {
 	underlying_getsockname(sock_fd, (struct sockaddr *) &socket_addr, &socket_addr_sz);
 	underlying_getpeername(sock_fd, (struct sockaddr *) &peer_addr, &peer_addr_sz);
 
-	int sock_index = add_socket(sub_id_index, sock_fd, socket_addr.sin_addr.s_addr, socket_addr.sin_port, peer_addr.sin_addr.s_addr, peer_addr.sin_port, subject.owner, subject.readers, subject.writers);
-
-	if(sock_index == -1)
-		return -1;
-
-	return 1;
-}
-
-int send_check(char * host_name, int uid, int pid, int sock_fd) {
-	int host_id_index = get_host_index(host_name);
-    int sub_id_index = get_subject_id_index(host_id_index, uid, pid);
-	if(sub_id_index == -1)
-		return -1;
-
-	int sock_index = get_socket_index_from_sub_id_sock_fd(sub_id_index, sock_fd);
-	if(sock_index == -1)
-		return -1;
-
-	int peer_sock_index = get_peer_socket_index(sock_index);
-	if(peer_sock_index == -1)
-		return -1;
-
-	SOCKET_OBJECT sock_obj = get_socket(sock_index);
-	SOCKET_OBJECT peer_sock_obj = get_socket(peer_sock_index);
-	SUBJECT subject = get_subject(sub_id_index);
-
-	sock_obj.readers = set_intersection(&subject.readers, &sock_obj.readers);
-    sock_obj.writers = set_union(&subject.writers, &sock_obj.writers);
-    update_socket_label(sock_index, sock_obj.readers, sock_obj.writers);
-
-	if(is_user_in_set(sock_obj.owner, &peer_sock_obj.writers)
-        && is_superset_of(&sock_obj.readers, &peer_sock_obj.readers)
-        && is_subset_of(&sock_obj.writers, &peer_sock_obj.writers))
-        return 1;
-
-	return 0;
-}
-
-int recv_check(char * host_name, int uid, int pid, int sock_fd) {
-	int host_id_index = get_host_index(host_name);
-    int sub_id_index = get_subject_id_index(host_id_index, uid, pid);
-	if(sub_id_index == -1)
-		return -1;
-	int sock_index = get_socket_index_from_sub_id_sock_fd(sub_id_index, sock_fd);
-	if(sock_index == -1)
-		return -1;
-	int peer_sock_index = get_peer_socket_index(sock_index);
-	if(peer_sock_index == -1)
-		return -1;
-
-	SOCKET_OBJECT sock_obj = get_socket(sock_index);
-	SOCKET_OBJECT peer_sock_obj = get_socket(peer_sock_index);
-	SUBJECT subject = get_subject(sub_id_index);
-
-	sock_obj.readers = set_intersection(&subject.readers, &sock_obj.readers);
-    sock_obj.writers = set_union(&subject.writers, &sock_obj.writers);
-    update_socket_label(sock_index, sock_obj.readers, sock_obj.writers);
-
-	if(is_user_in_set(sock_obj.owner, &peer_sock_obj.readers)) {
-        sock_obj.readers = set_intersection(&sock_obj.readers, &peer_sock_obj.readers);
-        sock_obj.writers = set_union(&sock_obj.writers, &peer_sock_obj.writers);
-        update_socket_label(sock_index, sock_obj.readers, sock_obj.writers);
-
-        return 1;
-    }
-
-	return 0;
-}
-
-int socket_close_check(char * host_name, int uid, int pid, int fd) {
-    int host_id_index = get_host_index(host_name);
-    int sub_id_index = get_subject_id_index(host_id_index, uid, pid);
-
-    return remove_socket(sub_id_index, fd);
+    int ret_val = remove_peer_from_connection(socket_addr.sin_addr.s_addr, socket_addr.sin_port, peer_addr.sin_addr.s_addr, peer_addr.sin_port, sub_id_index);
+	unlock();
+	return ret_val;
 }
 
 #endif

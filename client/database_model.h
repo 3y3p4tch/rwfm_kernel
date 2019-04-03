@@ -48,15 +48,18 @@ typedef struct subject {
     USER_SET writers;
 } SUBJECT;
 
-typedef struct socket_object {
-	uint sub_id_index;
-	uint sock_fd;
-	ulong src_ip, dstn_ip;
-	uint src_port, dstn_port;
-    uint owner;
+typedef struct address {
+	ulong ip;
+	uint port;
+} ADDRESS;
+
+typedef struct socket_connection_object {
+	ADDRESS src, dstn;
+	uint num_peers;
+    int peer_ids[2];
     USER_SET readers;
     USER_SET writers; 
-} SOCKET_OBJECT;
+} SOCKET_CONNECTION_OBJECT;
 
 typedef struct file_descriptor_map {
     uint sub_id_index;

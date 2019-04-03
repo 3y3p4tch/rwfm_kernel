@@ -9,6 +9,7 @@ the actual libc call for that function using the 'underlying_libc_functions.h'. 
 #include <stdio.h>
 #include <string.h>
 #include <dlfcn.h>
+#include <stdarg.h>
 #include "rule_engine.h"
 
 void debuglog(char *log) {
@@ -80,40 +81,6 @@ ssize_t write(int fd, const void *buf, size_t count) {
     return underlying_write(fd, buf, count);
 }
 
-int socket(int domain, int type, int protocol) {
-    int fd = underlying_socket(domain, type, protocol);
-	if(!is_rwfm_enabled()) {
-		return fd;
-	}
-	if(fd == -1)
-        return -1;
-
-	char host_name[1024];
-    sprintf(host_name, HOSTNAME);
-
-    if(socket_check(host_name, getuid(), getpid(), fd) != 1)
-		return -1;
-
-    return fd;
-}
-
-int bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
-	int ret = underlying_bind(sockfd, addr, addrlen);
-	if(!is_rwfm_enabled()) {
-		return ret;
-	}
-	if(ret == -1)
-		return -1;
-
-	char host_name[1024];
-    sprintf(host_name, HOSTNAME);
-
-	if(bind_check(host_name, getuid(), getpid(), sockfd) != 1)
-		return -1;
-
-	return ret;
-}
-
 int connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
     char host_name[1024];
     sprintf(host_name, HOSTNAME);
@@ -168,6 +135,7 @@ ssize_t recv(int sockfd, void *buf, size_t len, int flags) {
 	}
 
 	if(recv_check(host_name, getuid(), getpid(), sockfd) != 1) {
+		memset(buf, '\0', len);
 		buf = NULL;
 		return -1;
 	}

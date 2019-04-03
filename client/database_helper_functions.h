@@ -70,8 +70,7 @@ int add_user_id(USER_ID new_user_id) {
     }
 
     all_user_ids = (USER_ID *)realloc(all_user_ids, (num_user_ids+1) * sizeof(USER_ID));
-    all_user_ids[num_user_ids].host_id_index = new_user_id.host_id_index;
-    all_user_ids[num_user_ids].uid = new_user_id.uid;
+    all_user_ids[num_user_ids] = new_user_id;
 
     return num_user_ids++;
 }
@@ -103,9 +102,7 @@ int add_group_id(GROUP_ID new_group_id) {
     }
 
     all_group_ids = (GROUP_ID *)realloc(all_group_ids, (num_group_ids+1) * sizeof(GROUP_ID));
-    all_group_ids[num_group_ids].host_id_index = new_group_id.host_id_index;
-    all_group_ids[num_group_ids].gid = new_group_id.gid;
-    all_group_ids[num_group_ids].members = new_group_id.members;
+    all_group_ids[num_group_ids] = new_group_id;
 
     return num_group_ids++;
 }
@@ -139,9 +136,7 @@ int add_object_id(OBJECT_ID new_object_id) {
     }
 
     all_object_ids = (OBJECT_ID *)realloc(all_object_ids, (num_object_ids+1) * sizeof(OBJECT_ID));
-    all_object_ids[num_object_ids].host_id_index = new_object_id.host_id_index;
-    all_object_ids[num_object_ids].device_id = new_object_id.device_id;
-    all_object_ids[num_object_ids].inode_number = new_object_id.inode_number;
+    all_object_ids[num_object_ids] = new_object_id;
 
     return num_object_ids++;
 }
@@ -169,10 +164,7 @@ int add_object(OBJECT new_object) {
     }
 
     all_objects = (OBJECT *)realloc(all_objects, (num_objects+1) * sizeof(OBJECT));
-    all_objects[num_objects].obj_id_index = new_object.obj_id_index;
-    all_objects[num_objects].owner = new_object.owner;
-    all_objects[num_objects].readers = new_object.readers;
-    all_objects[num_objects].writers = new_object.writers;
+    all_objects[num_objects] = new_object;
 
     return num_objects++;
 }
@@ -210,9 +202,7 @@ int add_subject_id(SUBJECT_ID new_subject_id) {
     }
 
     all_subject_ids = (SUBJECT_ID *)realloc(all_subject_ids, (num_subject_ids+1) * sizeof(SUBJECT_ID));
-    all_subject_ids[num_subject_ids].host_id_index = new_subject_id.host_id_index;
-    all_subject_ids[num_subject_ids].uid = new_subject_id.uid;
-    all_subject_ids[num_subject_ids].pid = new_subject_id.pid;
+    all_subject_ids[num_subject_ids] = new_subject_id;
 
     return num_subject_ids++;
 }
@@ -240,10 +230,7 @@ int add_subject(SUBJECT new_subject) {
     }
 
     all_subjects = (SUBJECT *)realloc(all_subjects, (num_subjects+1) * sizeof(SUBJECT));
-    all_subjects[num_subjects].sub_id_index = new_subject.sub_id_index;
-    all_subjects[num_subjects].owner = new_subject.owner;
-    all_subjects[num_subjects].readers = new_subject.readers;
-    all_subjects[num_subjects].writers = new_subject.writers;
+    all_subjects[num_subjects] = new_subject;
 
     return num_subjects++;
 }
@@ -265,84 +252,65 @@ int update_subject_label(int sub_id_index, USER_SET readers, USER_SET writers) {
     return 0;
 }
 
-extern int num_sockets;
-extern SOCKET_OBJECT * all_sockets;
+extern int num_socket_connections;
+extern SOCKET_CONNECTION_OBJECT * all_socket_connections;
 
-int add_socket(SOCKET_OBJECT new_socket) {
-	all_sockets = (SOCKET_OBJECT *)realloc(all_sockets, (num_sockets+1) * sizeof(SOCKET_OBJECT));
-    all_sockets[num_sockets].sub_id_index = new_socket.sub_id_index;
-    all_sockets[num_sockets].sock_fd = new_socket.sock_fd;
-    all_sockets[num_sockets].src_ip = new_socket.src_ip;
-    all_sockets[num_sockets].src_port = new_socket.src_port;
-    all_sockets[num_sockets].dstn_ip = new_socket.dstn_ip;
-    all_sockets[num_sockets].dstn_port = new_socket.dstn_port;
-    all_sockets[num_sockets].owner = new_socket.owner;
-    all_sockets[num_sockets].readers = new_socket.readers;
-    all_sockets[num_sockets].writers = new_socket.writers;
-
-    return num_sockets++;
+int match_address(ADDRESS addr1, ADDRESS addr2) {
+	return ((addr1.ip == addr2.ip) && (addr1.port == addr2.port));
 }
 
-int update_socket_src_ip_port(int socket_index, ulong ip, uint port) {
-	all_sockets[socket_index].src_ip = ip;
-	all_sockets[socket_index].src_port = port;
-
-	return 0;
-}
-
-int update_socket_dstn_ip_port(int socket_index, ulong ip, uint port) {
-	all_sockets[socket_index].dstn_ip = ip;
-	all_sockets[socket_index].dstn_port = port;
-
-	return 0;
-}
-
-int get_socket_index_from_sub_id_sock_fd(int sub_id_index, int sock_fd) {
-	for(int i=0;i<num_sockets;i++)
-		if(all_sockets[i].sub_id_index == sub_id_index && all_sockets[i].sock_fd == sock_fd)
+int get_connection_index(ADDRESS src, ADDRESS dstn) {
+	for(int i=0;i<num_socket_connections;i++)
+		if((match_address(all_socket_connections[i].src, src) && match_address(all_socket_connections[i].dstn, dstn))
+            || (match_address(all_socket_connections[i].src, dstn) && match_address(all_socket_connections[i].dstn, src)))
 			return i;
 
 	return -1;
 }
 
-int get_socket_index_from_ip_port(ulong src_ip, uint src_port, ulong dstn_ip, uint dstn_port) {
-	for(int i=0;i<num_sockets;i++)
-		if(all_sockets[i].src_ip == src_ip && all_sockets[i].src_port == src_port
-            && all_sockets[i].dstn_ip == dstn_ip && all_sockets[i].dstn_port == dstn_port)
-			return i;
+int add_connection(SOCKET_CONNECTION_OBJECT new_socket_connection) {
+	int exists = get_connection_index(new_socket_connection.src, new_socket_connection.dstn);
+	if(exists == -1) {
+		all_socket_connections = (SOCKET_CONNECTION_OBJECT *)realloc(all_socket_connections, (num_socket_connections+1) * sizeof(SOCKET_CONNECTION_OBJECT));
+		all_socket_connections[num_socket_connections] = new_socket_connection;
 
-	return -1;
+		return num_socket_connections++;
+	} else {
+		all_socket_connections[exists].peer_ids[1] = all_socket_connections[exists].peer_ids[0];
+		all_socket_connections[exists].num_peers++;
+		all_socket_connections[exists].readers = all_socket_connections[exists].readers & new_socket_connection.readers;
+		all_socket_connections[exists].writers = all_socket_connections[exists].writers | new_socket_connection.writers;
+
+		return exists;
+	}
 }
 
-int update_socket_label(int socket_index, USER_SET readers, USER_SET writers) {
-	all_sockets[socket_index].readers = readers;
-	all_sockets[socket_index].writers = writers;
+int update_connection_label(int connection_index, USER_SET readers, USER_SET writers) {
+	all_socket_connections[connection_index].readers = readers;
+	all_socket_connections[connection_index].writers = writers;
 
 	return 0;
 }
 
-int get_peer_socket_index(int sock_index) {
-	for(int i=0;i<num_sockets;i++) {
-		if(i != sock_index
-            && all_sockets[i].src_ip == all_sockets[sock_index].dstn_ip
-            && all_sockets[i].src_port == all_sockets[sock_index].dstn_port)
-			return i;
+int is_peer(int connection_index, int peer_id) {
+	return (all_socket_connections[connection_index].peer_ids[0] == peer_id || all_socket_connections[connection_index].peer_ids[1] == peer_id);
+}
+
+int remove_peer_from_connection(ADDRESS src, ADDRESS dstn, int peer_id) {
+	int connection_index = get_connection_index(src, dstn);
+	if(connection_index == -1 || !is_peer(connection_index, peer_id))
+		return -1;
+
+	if(all_socket_connections[connection_index].num_peers > 1) {
+		all_socket_connections[connection_index].num_peers--;
+		return num_socket_connections;
 	}
 
-	return -1;
-}
+    for(int i=connection_index;i<num_socket_connections-1;i++)
+    	all_socket_connections[i] = all_socket_connections[i+1];
+    all_socket_connections = (SOCKET_CONNECTION_OBJECT *)realloc(all_socket_connections, (--num_socket_connections) * sizeof(SOCKET_CONNECTION_OBJECT));
 
-int remove_socket(int sub_id_index, int sock_fd) {
-    for(int i=0;i<num_sockets;i++) {
-        if(all_sockets[i].sub_id_index == sub_id_index && all_sockets[i].sock_fd == sock_fd) {
-            for(int j=i;j<num_sockets-1;j++)
-                all_sockets[j] = all_sockets[j+1];
-            all_sockets = (SOCKET_OBJECT *)realloc(all_sockets, (--num_sockets) * sizeof(SOCKET_OBJECT));
-            return num_sockets;
-        }
-    }
-
-    return -1;
+	return num_socket_connections;
 }
 
 extern int num_fd_maps;
@@ -361,9 +329,7 @@ int add_new_mapping(FD_MAP new_map) {
     }
 
     fd_map = (FD_MAP *)realloc(fd_map, (num_fd_maps+1) * sizeof(FD_MAP));
-    fd_map[num_fd_maps].sub_id_index = new_map.sub_id_index;
-    fd_map[num_fd_maps].obj_id_index = new_map.obj_id_index;
-    fd_map[num_fd_maps].fd = new_map.fd;
+    fd_map[num_fd_maps] = new_map;
 
     return num_fd_maps++;
 }
@@ -411,20 +377,11 @@ void copy_fd_map(int new_sub_id, int old_fd_map_index) {
     fd_map[new_map_index].sub_id_index = new_sub_id;
 }
 
-void copy_socket(int new_sub_id, int old_socket_index) {
-    int new_socket_index = add_socket(all_sockets[old_socket_index]);
-    all_sockets[new_socket_index].sub_id_index = new_sub_id;
-}
-
 int copy_subject_info(uint src_sub_id_index, uint dstn_sub_id_index) {
     int fd_maps_to_copy[1024], num_fd_maps_to_copy = 0;
     for(int i=0;i<num_fd_maps;i++) {
         if(fd_map[i].sub_id_index == src_sub_id_index)
             copy_fd_map(dstn_sub_id_index, i);
-    }
-    for(int i=0;i<num_sockets;i++) {
-        if(all_sockets[i].sub_id_index == src_sub_id_index)
-            copy_socket(dstn_sub_id_index, i);
     }
 
     return 0;

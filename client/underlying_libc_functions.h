@@ -3,7 +3,6 @@
 
 #include <dlfcn.h>
 #include <sys/socket.h>
-#include <semaphore.h>
 #include "preload.h"
 
 void *get_libc() {

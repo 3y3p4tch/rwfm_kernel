@@ -17,7 +17,7 @@ int main()
 	socklen_t server_addr_sz, client_addr_sz;
 
 	server_addr.sin_family = AF_INET;
-	server_addr.sin_port = htons(7777);
+	server_addr.sin_port = htons(0);
 	server_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
 	memset(server_addr.sin_zero, '\0', sizeof server_addr.sin_zero);
 	server_addr_sz = sizeof server_addr;
@@ -25,6 +25,7 @@ int main()
 
 	listen_sockfd = socket(PF_INET, SOCK_STREAM, 0);
 	int ret = bind(listen_sockfd, (struct sockaddr *) &server_addr, server_addr_sz);
+	getsockname(listen_sockfd, (struct sockaddr *) &server_addr, &server_addr_sz);
 	if(listen(listen_sockfd,5)==0)
 	{
 		printf("Listening on %s:%u\n",inet_ntoa(server_addr.sin_addr),ntohs(server_addr.sin_port));
@@ -44,8 +45,8 @@ int main()
 	sprintf(port,"%u",ntohs(client_addr.sin_port));
 	strcat(buff,port);
 	ret = send(connection_sockfd,buff,sizeof buff, 0);
-	//close(connection_sockfd);
-	//close(listen_sockfd);
+	close(connection_sockfd);
+	close(listen_sockfd);
 
 	return 0;
 }

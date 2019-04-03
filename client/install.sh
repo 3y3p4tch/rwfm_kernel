@@ -11,8 +11,7 @@ export ADD_USER=0
 export ADD_GROUP=1
 
 #Deleting old files generated
-rm -fr preload.so preload.h database_server /tmp/request_fifo /tmp/response_fifo /lib/secos /opt/secos
-unlink /dev/shm/sem.database_semaphore
+./clean.sh
 ./create_macro_file.sh
 
 make || {
