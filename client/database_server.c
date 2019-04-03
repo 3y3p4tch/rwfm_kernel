@@ -40,8 +40,14 @@ SUBJECT * all_subjects = NULL;
 int num_socket_connections = 0;
 SOCKET_CONNECTION_OBJECT * all_socket_connections = NULL;
 
+int num_pipe_objects = 0;
+PIPE_OBJECT * all_pipe_objects = NULL;
+
 int num_fd_maps = 0;
 FD_MAP * fd_map = NULL;
+
+int num_pipe_ref_maps = 0;
+PIPE_REF_MAP * pipe_ref_map = NULL;
 
 int read_request(char *req) {
     int read_fifo_fd = open(REQUEST_FIFO_PATH, O_RDONLY);
@@ -184,8 +190,8 @@ int do_operation(int operation, char **req_args, int num_args) {
                 return -1;
             OBJECT_ID object_id_add;
             object_id_add.host_id_index = strtol(req_args[1], NULL, 10);
-            object_id_add.device_id = strtol(req_args[2], NULL, 10);
-            object_id_add.inode_number = strtol(req_args[3], NULL, 10);
+            object_id_add.device_id = strtoul(req_args[2], NULL, 10);
+            object_id_add.inode_number = strtoul(req_args[3], NULL, 10);
             sprintf(response, "%d", add_object_id(object_id_add));
             write_response(response);
             break;
@@ -196,8 +202,8 @@ int do_operation(int operation, char **req_args, int num_args) {
                 return -1;
             OBJECT_ID object_id_get;
             object_id_get.host_id_index = strtol(req_args[1], NULL, 10);
-            object_id_get.device_id = strtol(req_args[2], NULL, 10);
-            object_id_get.inode_number = strtol(req_args[3], NULL, 10);
+            object_id_get.device_id = strtoul(req_args[2], NULL, 10);
+            object_id_get.inode_number = strtoul(req_args[3], NULL, 10);
             sprintf(response, "%d", get_object_id_index(object_id_get));
             write_response(response);
             break;
@@ -370,7 +376,78 @@ int do_operation(int operation, char **req_args, int num_args) {
             write_response(response);
             break;
         }
-	
+
+
+		case ADD_PIPE_OP:
+		{
+			if(num_args != 7)
+                return -1;
+			PIPE_OBJECT pipe_obj;
+            pipe_obj.host_id_index = strtol(req_args[1], NULL, 10);
+            pipe_obj.device_id = strtoul(req_args[2], NULL, 10);
+			pipe_obj.inode_number = strtoul(req_args[3], NULL, 10);
+            pipe_obj.pipe_ref_count = strtol(req_args[4], NULL, 10);
+			pipe_obj.readers = strtoull(req_args[5], NULL, 16);
+            pipe_obj.writers = strtoull(req_args[6], NULL, 16);
+            sprintf(response, "%d", add_new_pipe(pipe_obj));
+            write_response(response);
+            break;
+		}
+		case INCREASE_PIPE_REF_COUNT_OP:
+		{
+			if(num_args != 4)
+                return -1;
+            int pipe_id = strtol(req_args[1], NULL, 10);
+            USER_SET readers = strtoull(req_args[2], NULL, 16);
+            USER_SET writers = strtoull(req_args[3], NULL, 16);
+            sprintf(response, "%d", increase_pipe_ref_count(pipe_id, readers, writers));
+            write_response(response);
+            break;
+		}
+		case GET_PIPE_INDEX_OP:
+		{
+			if(num_args != 4)
+                return -1;
+            int host_id_index = strtol(req_args[1], NULL, 10);
+            int device_id = strtoul(req_args[2], NULL, 10);
+			int inode_number = strtoul(req_args[3], NULL, 10);
+            sprintf(response, "%d", get_pipe_index(host_id_index, device_id, inode_number));
+            write_response(response);
+            break;
+		}
+		case GET_PIPE_OP:
+		{
+            if(num_args != 2)
+                return -1;
+            int pipe_id = strtol(req_args[1], NULL, 10);
+            PIPE_OBJECT pipe_obj = all_pipe_objects[pipe_id];
+            sprintf(response, "%d %llx %llx", pipe_obj.pipe_ref_count, pipe_obj.readers, pipe_obj.writers);
+            write_response(response);
+            break;
+        }
+		case UPDATE_PIPE_LABEL_OP:
+		{
+			if(num_args != 4)
+                return -1;
+            int pipe_id = strtol(req_args[1], NULL, 10);
+            USER_SET readers = strtoull(req_args[2], NULL, 16);
+            USER_SET writers = strtoull(req_args[3], NULL, 16);
+            sprintf(response, "%d", update_pipe_label(pipe_id, readers, writers));
+            write_response(response);
+            break;
+		}
+		case REMOVE_PIPE_OP:
+		{
+            if(num_args != 4)
+                return -1;
+            int host_id_index = strtol(req_args[1], NULL, 10);
+            int device_id = strtoul(req_args[2], NULL, 10);
+			int inode_number = strtoul(req_args[3], NULL, 10);
+            sprintf(response, "%d", remove_pipe(host_id_index, device_id, inode_number));
+            write_response(response);
+            break;
+        }
+
 
         case ADD_NEW_FD_MAPPING_OP:
         {
@@ -411,6 +488,30 @@ int do_operation(int operation, char **req_args, int num_args) {
             int sub_id_ind = strtol(req_args[1], NULL, 10);
             int fd_obj = strtol(req_args[2], NULL, 10);
             sprintf(response, "%d", remove_fd_map(sub_id_ind, fd_obj));
+            write_response(response);
+            break;
+        }
+
+
+		case ADD_NEW_PIPE_REF_MAPPING_OP:
+        {
+            if(num_args != 4)
+                return -1;
+            PIPE_REF_MAP pipe_map;
+            pipe_map.sub_id_index = strtol(req_args[1], NULL, 10);
+            pipe_map.pipe_index = strtol(req_args[2], NULL, 10);
+            pipe_map.ref_count = strtol(req_args[3], NULL, 10);
+            sprintf(response, "%d", add_new_pipe_mapping(pipe_map));
+            write_response(response);
+            break;
+        }
+		case INCREASE_PIPE_MAPPING_REF_COUNT_OP:
+        {
+            if(num_args != 3)
+                return -1;
+            int sub_id_index = strtol(req_args[1], NULL, 10);
+            int pipe_index = strtol(req_args[2], NULL, 10);
+            sprintf(response, "%d", increase_pipe_mapping_ref_count(sub_id_index, pipe_index));
             write_response(response);
             break;
         }

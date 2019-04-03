@@ -313,6 +313,63 @@ int remove_peer_from_connection(ADDRESS src, ADDRESS dstn, int peer_id) {
 	return num_socket_connections;
 }
 
+
+extern int num_pipe_objects;
+extern PIPE_OBJECT * all_pipe_objects;
+
+int match_pipe(PIPE_OBJECT pipe1, PIPE_OBJECT pipe2) {
+	return ((pipe1.host_id_index == pipe2.host_id_index) && (pipe1.device_id == pipe2.device_id) && (pipe1.inode_number == pipe2.inode_number));
+}
+
+int get_pipe_index(int host_id_index, ulong device_id, ulong inode_number) {
+	PIPE_OBJECT cur_pipe;
+	cur_pipe.host_id_index = host_id_index;
+	cur_pipe.device_id = device_id;
+	cur_pipe.inode_number = inode_number;
+	for(int i=0;i<num_pipe_objects;i++) {
+		if(match_pipe(all_pipe_objects[i], cur_pipe))
+			return i;
+	}
+
+	return -1;
+}
+
+int add_new_pipe(PIPE_OBJECT new_pipe) {
+	all_pipe_objects = (PIPE_OBJECT *)realloc(all_pipe_objects, (num_pipe_objects+1) * sizeof(PIPE_OBJECT));
+    all_pipe_objects[num_pipe_objects] = new_pipe;
+
+    return num_pipe_objects++;
+}
+
+int update_pipe_label(int pipe_index, USER_SET readers, USER_SET writers) {
+	all_pipe_objects[pipe_index].readers = readers;
+	all_pipe_objects[pipe_index].writers = writers;
+
+	return 0;
+}
+
+int increase_pipe_ref_count(int pipe_index, USER_SET readers, USER_SET writers) {
+	all_pipe_objects[pipe_index].pipe_ref_count++;
+
+	return update_pipe_label(pipe_index, readers, writers);
+}
+
+int remove_pipe(int host_id_index, ulong device_id, ulong inode_number) {
+	int pipe_index = get_pipe_index(host_id_index, device_id, inode_number);
+	if(pipe_index == -1)
+		return -1;
+	if(all_pipe_objects[pipe_index].pipe_ref_count > 1) {
+		all_pipe_objects[pipe_index].pipe_ref_count--;
+		return num_pipe_objects;
+	}
+	for(int i=pipe_index;i<num_pipe_objects-1;i++)
+    	all_pipe_objects[i] = all_pipe_objects[i+1];
+    all_pipe_objects = (PIPE_OBJECT *)realloc(all_pipe_objects, (--num_pipe_objects) * sizeof(PIPE_OBJECT));
+
+	return num_pipe_objects;
+}
+
+
 extern int num_fd_maps;
 extern FD_MAP * fd_map;
 
@@ -365,6 +422,33 @@ int remove_fd_map(uint sub_id_index, uint fd) {
     return -1;
 }
 
+extern int num_pipe_ref_maps;
+extern PIPE_REF_MAP * pipe_ref_map;
+
+int get_pipe_ref_map_index(int sub_id_index, int pipe_index) {
+	for(int i=0;i<num_pipe_ref_maps;i++) {
+		if(pipe_ref_map[i].sub_id_index == sub_id_index && pipe_ref_map[i].pipe_index == pipe_index)
+			return i;
+	}
+
+	return -1;
+}
+
+int add_new_pipe_mapping(PIPE_REF_MAP new_map) {
+	pipe_ref_map = (PIPE_REF_MAP *)realloc(pipe_ref_map, (num_pipe_ref_maps+1) * sizeof(PIPE_REF_MAP));
+    pipe_ref_map[num_pipe_ref_maps] = new_map;
+
+    return num_pipe_ref_maps++;
+}
+
+int increase_pipe_mapping_ref_count(int sub_id_index, int pipe_index) {
+	int cur_map = get_pipe_ref_map_index(sub_id_index, pipe_index);
+	if(cur_map == -1)
+		return -1;
+	return ++pipe_ref_map[cur_map].ref_count;
+}
+
+
 /*
 Description :   Copy all the information contained in source subject id to destination subject id.
                 The information include all the fds (file, pipe, socket, etc) opened by the source.
@@ -377,11 +461,22 @@ void copy_fd_map(int new_sub_id, int old_fd_map_index) {
     fd_map[new_map_index].sub_id_index = new_sub_id;
 }
 
+void copy_pipe_map(int new_sub_id, int old_pipe_map_index) {
+    int new_map_index = add_new_pipe_mapping(pipe_ref_map[old_pipe_map_index]);
+    pipe_ref_map[new_map_index].sub_id_index = new_sub_id;
+	//Now the pipe object is refered to by twice as many subjects
+	all_pipe_objects[pipe_ref_map[new_map_index].pipe_index].pipe_ref_count+=pipe_ref_map[new_map_index].ref_count;
+}
+
 int copy_subject_info(uint src_sub_id_index, uint dstn_sub_id_index) {
-    int fd_maps_to_copy[1024], num_fd_maps_to_copy = 0;
     for(int i=0;i<num_fd_maps;i++) {
         if(fd_map[i].sub_id_index == src_sub_id_index)
             copy_fd_map(dstn_sub_id_index, i);
+    }
+
+	for(int i=0;i<num_pipe_ref_maps;i++) {
+        if(pipe_ref_map[i].sub_id_index == src_sub_id_index)
+            copy_pipe_map(dstn_sub_id_index, i);
     }
 
     return 0;

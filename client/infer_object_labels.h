@@ -18,6 +18,11 @@ int infer_labels(OBJECT * object, struct stat * object_info, int host_id_index) 
 	object->readers = 0;
 	object->writers = 0;
 
+	//Taking current file creation mask of process into consideration for actual mode to be set
+	mode_t curmask = umask(0);
+	umask(curmask);
+	object_info->st_mode = object_info->st_mode & (~curmask);
+
 	int is_user_reader = object_info->st_mode & S_IRUSR ? 1 : 0;
     int is_user_writer = object_info->st_mode & S_IWUSR ? 1 : 0;
 

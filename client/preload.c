@@ -57,7 +57,7 @@ ssize_t read(int fd, void *buf, size_t count) {
     fstat(fd, &file_info);
 
     if(is_rwfm_enabled()) {
-        if(((file_info.st_mode & S_IFMT) == S_IFREG) && file_read_check(host_name, getuid(), getpid(), fd) != 1) {
+        if(S_ISREG(file_info.st_mode) && file_read_check(host_name, getuid(), getpid(), fd) != 1) {
             return -1;
         }
     }
@@ -73,7 +73,7 @@ ssize_t write(int fd, const void *buf, size_t count) {
     fstat(fd, &file_info);
 
     if(is_rwfm_enabled()) {
-        if(((file_info.st_mode & S_IFMT) == S_IFREG) && file_write_check(host_name, getuid(), getpid(), fd) != 1) {
+        if(S_ISREG(file_info.st_mode) && file_write_check(host_name, getuid(), getpid(), fd) != 1) {
             return -1;
         }
     }

@@ -171,9 +171,9 @@ unsigned long long int get_members_from_group_id(int group_id_index) {
 }
 
 
-int add_object_id(int host_id_index, int device_id, int inode_num) {
+int add_object_id(int host_id_index, unsigned long device_id, unsigned long inode_num) {
     char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
-    sprintf(request, "%d %d %d %d", ADD_OBJECT_ID_OP, host_id_index, device_id, inode_num);
+    sprintf(request, "%d %d %lu %lu", ADD_OBJECT_ID_OP, host_id_index, device_id, inode_num);
     lock_pipe();
 	write_request(request);
     read_response(response);
@@ -182,9 +182,9 @@ int add_object_id(int host_id_index, int device_id, int inode_num) {
     return strtol(response, NULL, 10);
 }
 
-int get_object_id_index(int host_id_index, int device_id, int inode_num) {
+int get_object_id_index(int host_id_index, unsigned long device_id, unsigned long inode_num) {
     char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
-    sprintf(request, "%d %d %d %d", GET_OBJECT_ID_INDEX_OP, host_id_index, device_id, inode_num);
+    sprintf(request, "%d %d %lu %lu", GET_OBJECT_ID_INDEX_OP, host_id_index, device_id, inode_num);
     lock_pipe();
 	write_request(request);
     read_response(response);
@@ -356,6 +356,79 @@ int remove_peer_from_connection(ulong src_ip, uint src_port, ulong dstn_ip, uint
 }
 
 
+int add_new_pipe(int host_id_index, ulong device_id, ulong inode_num, int pipe_ref_count, USER_SET readers, USER_SET writers) {
+	char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
+    sprintf(request, "%d %d %lu %lu %d %llx %llx", ADD_PIPE_OP, host_id_index, device_id, inode_num, pipe_ref_count, readers, writers);
+    lock_pipe();
+	write_request(request);
+    read_response(response);
+	unlock_pipe();
+	
+    return strtol(response, NULL, 10);
+}
+
+int increase_pipe_ref_count(int pipe_id, USER_SET readers, USER_SET writers) {
+	char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
+    sprintf(request, "%d %d %llx %llx", INCREASE_PIPE_REF_COUNT_OP, pipe_id, readers, writers);
+    lock_pipe();
+	write_request(request);
+    read_response(response);
+	unlock_pipe();
+	
+    return strtol(response, NULL, 10);
+}
+
+int update_pipe_label(int pipe_index, USER_SET readers, USER_SET writers) {
+	char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
+    sprintf(request, "%d %d %llx %llx", INCREASE_PIPE_REF_COUNT_OP, pipe_index, readers, writers);
+    lock_pipe();
+	write_request(request);
+    read_response(response);
+	unlock_pipe();
+	
+    return strtol(response, NULL, 10);
+}
+
+int get_pipe_index(int host_id_index, ulong device_id, ulong inode_number) {
+	char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
+    sprintf(request, "%d %d %lu %lu", GET_PIPE_INDEX_OP, host_id_index, device_id, inode_number);
+    lock_pipe();
+	write_request(request);
+    read_response(response);
+	unlock_pipe();
+	
+    return strtol(response, NULL, 10);
+}
+
+PIPE_OBJECT get_pipe(int pipe_id) {
+	char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
+    sprintf(request, "%d %d", GET_PIPE_OP, pipe_id);
+    lock_pipe();
+	write_request(request);
+    read_response(response);
+	unlock_pipe();
+	char **arguments = (char**)malloc(MAX_REQUEST_LENGTH * sizeof(char*));
+    get_args_from_request(arguments, response);
+    PIPE_OBJECT pipe_obj;
+	pipe_obj.pipe_ref_count = strtol(arguments[0], NULL, 10);
+    pipe_obj.readers = strtoull(arguments[1], NULL, 16);
+    pipe_obj.writers = strtoull(arguments[2], NULL, 16);
+
+    return pipe_obj;
+}
+
+int remove_pipe(int host_id_index, ulong device_id, ulong inode_number) {
+	char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
+    sprintf(request, "%d %d %lu %lu", REMOVE_PIPE_OP, host_id_index, device_id, inode_number);
+    lock_pipe();
+	write_request(request);
+    read_response(response);
+	unlock_pipe();
+	
+    return strtol(response, NULL, 10);
+}
+
+
 int add_fd_mapping(int sub_id_index, int obj_id_index, int fd) {
     char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
     sprintf(request, "%d %d %d %d", ADD_NEW_FD_MAPPING_OP, sub_id_index, obj_id_index, fd);
@@ -399,6 +472,30 @@ int remove_fd_mapping(int sub_id_index, int fd) {
 	
     return strtol(response, NULL, 10);
 }
+
+
+int add_new_pipe_mapping(int sub_id_index, int pipe_index, int ref_count) {
+	char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
+    sprintf(request, "%d %d %d %d", ADD_NEW_PIPE_REF_MAPPING_OP, sub_id_index, pipe_index, ref_count);
+    lock_pipe();
+	write_request(request);
+    read_response(response);
+	unlock_pipe();
+	
+    return strtol(response, NULL, 10);
+}
+
+int increase_pipe_mapping_ref_count(int sub_id_index, int pipe_index) {
+	char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
+    sprintf(request, "%d %d %d", INCREASE_PIPE_MAPPING_REF_COUNT_OP, sub_id_index, pipe_index);
+    lock_pipe();
+	write_request(request);
+    read_response(response);
+	unlock_pipe();
+	
+    return strtol(response, NULL, 10);
+}
+
 
 int copy_subject_info(int src_sub_id_index, int dstn_sub_id_index) {
     char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];

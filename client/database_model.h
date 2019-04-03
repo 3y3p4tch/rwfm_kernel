@@ -23,8 +23,8 @@ typedef struct group_id {
 } GROUP_ID;
 
 typedef struct object_id {
-    uint device_id;
-    uint inode_number;
+    ulong device_id;
+    ulong inode_number;
     int host_id_index;
 } OBJECT_ID;
 
@@ -61,9 +61,25 @@ typedef struct socket_connection_object {
     USER_SET writers; 
 } SOCKET_CONNECTION_OBJECT;
 
+typedef struct pipe_object {
+	int host_id_index;
+	ulong device_id;
+	ulong inode_number;
+	int pipe_ref_count;
+	USER_SET readers;
+	USER_SET writers;
+} PIPE_OBJECT;
+
 typedef struct file_descriptor_map {
     uint sub_id_index;
     uint obj_id_index;
     uint fd;
 } FD_MAP;
+
+typedef struct pipe_ref_map {
+	uint sub_id_index;
+	uint pipe_index;
+	uint ref_count;
+} PIPE_REF_MAP;
+
 #endif
