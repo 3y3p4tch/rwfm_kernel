@@ -395,12 +395,10 @@ int do_operation(int operation, char **req_args, int num_args) {
 		}
 		case INCREASE_PIPE_REF_COUNT_OP:
 		{
-			if(num_args != 4)
+			if(num_args != 2)
                 return -1;
             int pipe_id = strtol(req_args[1], NULL, 10);
-            USER_SET readers = strtoull(req_args[2], NULL, 16);
-            USER_SET writers = strtoull(req_args[3], NULL, 16);
-            sprintf(response, "%d", increase_pipe_ref_count(pipe_id, readers, writers));
+            sprintf(response, "%d", increase_pipe_ref_count(pipe_id));
             write_response(response);
             break;
 		}
@@ -505,13 +503,23 @@ int do_operation(int operation, char **req_args, int num_args) {
             write_response(response);
             break;
         }
-		case INCREASE_PIPE_MAPPING_REF_COUNT_OP:
+		case INCREMENT_PIPE_MAPPING_REF_COUNT_OP:
         {
             if(num_args != 3)
                 return -1;
             int sub_id_index = strtol(req_args[1], NULL, 10);
             int pipe_index = strtol(req_args[2], NULL, 10);
-            sprintf(response, "%d", increase_pipe_mapping_ref_count(sub_id_index, pipe_index));
+            sprintf(response, "%d", increment_pipe_mapping_ref_count(sub_id_index, pipe_index));
+            write_response(response);
+            break;
+        }
+		case DECREMENT_PIPE_MAPPING_REF_COUNT_OP:
+        {
+            if(num_args != 3)
+                return -1;
+            int sub_id_index = strtol(req_args[1], NULL, 10);
+            int pipe_index = strtol(req_args[2], NULL, 10);
+            sprintf(response, "%d", decrement_pipe_mapping_ref_count(sub_id_index, pipe_index));
             write_response(response);
             break;
         }

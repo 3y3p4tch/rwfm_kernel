@@ -367,9 +367,9 @@ int add_new_pipe(int host_id_index, ulong device_id, ulong inode_num, int pipe_r
     return strtol(response, NULL, 10);
 }
 
-int increase_pipe_ref_count(int pipe_id, USER_SET readers, USER_SET writers) {
+int increase_pipe_ref_count(int pipe_id) {
 	char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
-    sprintf(request, "%d %d %llx %llx", INCREASE_PIPE_REF_COUNT_OP, pipe_id, readers, writers);
+    sprintf(request, "%d %d", INCREASE_PIPE_REF_COUNT_OP, pipe_id);
     lock_pipe();
 	write_request(request);
     read_response(response);
@@ -380,7 +380,7 @@ int increase_pipe_ref_count(int pipe_id, USER_SET readers, USER_SET writers) {
 
 int update_pipe_label(int pipe_index, USER_SET readers, USER_SET writers) {
 	char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
-    sprintf(request, "%d %d %llx %llx", INCREASE_PIPE_REF_COUNT_OP, pipe_index, readers, writers);
+    sprintf(request, "%d %d %llx %llx", UPDATE_PIPE_LABEL_OP, pipe_index, readers, writers);
     lock_pipe();
 	write_request(request);
     read_response(response);
@@ -485,9 +485,20 @@ int add_new_pipe_mapping(int sub_id_index, int pipe_index, int ref_count) {
     return strtol(response, NULL, 10);
 }
 
-int increase_pipe_mapping_ref_count(int sub_id_index, int pipe_index) {
+int increment_pipe_mapping_ref_count(int sub_id_index, int pipe_index) {
 	char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
-    sprintf(request, "%d %d %d", INCREASE_PIPE_MAPPING_REF_COUNT_OP, sub_id_index, pipe_index);
+    sprintf(request, "%d %d %d", INCREMENT_PIPE_MAPPING_REF_COUNT_OP, sub_id_index, pipe_index);
+    lock_pipe();
+	write_request(request);
+    read_response(response);
+	unlock_pipe();
+	
+    return strtol(response, NULL, 10);
+}
+
+int decrement_pipe_mapping_ref_count(int sub_id_index, int pipe_index) {
+	char request[MAX_REQUEST_LENGTH], response[MAX_REQUEST_LENGTH];
+    sprintf(request, "%d %d %d", DECREMENT_PIPE_MAPPING_REF_COUNT_OP, sub_id_index, pipe_index);
     lock_pipe();
 	write_request(request);
     read_response(response);

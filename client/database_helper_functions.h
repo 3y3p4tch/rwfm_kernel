@@ -348,10 +348,10 @@ int update_pipe_label(int pipe_index, USER_SET readers, USER_SET writers) {
 	return 0;
 }
 
-int increase_pipe_ref_count(int pipe_index, USER_SET readers, USER_SET writers) {
+int increase_pipe_ref_count(int pipe_index) {
 	all_pipe_objects[pipe_index].pipe_ref_count++;
 
-	return update_pipe_label(pipe_index, readers, writers);
+	return 0;
 }
 
 int remove_pipe(int host_id_index, ulong device_id, ulong inode_number) {
@@ -441,11 +441,26 @@ int add_new_pipe_mapping(PIPE_REF_MAP new_map) {
     return num_pipe_ref_maps++;
 }
 
-int increase_pipe_mapping_ref_count(int sub_id_index, int pipe_index) {
+int increment_pipe_mapping_ref_count(int sub_id_index, int pipe_index) {
 	int cur_map = get_pipe_ref_map_index(sub_id_index, pipe_index);
 	if(cur_map == -1)
 		return -1;
 	return ++pipe_ref_map[cur_map].ref_count;
+}
+
+int decrement_pipe_mapping_ref_count(int sub_id_index, int pipe_index) {
+	int cur_map = get_pipe_ref_map_index(sub_id_index, pipe_index);
+	if(cur_map == -1)
+		return -1;
+
+	if(pipe_ref_map[cur_map].ref_count > 1)
+		return --pipe_ref_map[cur_map].ref_count;
+
+	for(int i=cur_map;i<num_pipe_ref_maps-1;i++)
+        pipe_ref_map[i] = pipe_ref_map[i+1];
+    pipe_ref_map = (PIPE_REF_MAP *)realloc(pipe_ref_map, (--num_pipe_ref_maps) * sizeof(PIPE_REF_MAP));
+
+    return 0;
 }
 
 

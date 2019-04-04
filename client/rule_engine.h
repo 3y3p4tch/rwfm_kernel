@@ -50,7 +50,7 @@ void fork_check(char* host_name, int uid, int child_pid, int parent_pid) {
 	unlock();
 }
 
-int open_check(char * host_name, struct stat * file_info, int fd, int uid, int pid){
+int file_open_check(char * host_name, struct stat * file_info, int fd, int uid, int pid){
 	lock();
     int host_id_index = get_host_index(host_name);
 	int subject_id_index = get_subject_id_index(host_id_index, uid, pid);
@@ -263,6 +263,93 @@ int socket_close_check(char * host_name, int uid, int pid, int sock_fd) {
     int ret_val = remove_peer_from_connection(socket_addr.sin_addr.s_addr, socket_addr.sin_port, peer_addr.sin_addr.s_addr, peer_addr.sin_port, sub_id_index);
 	unlock();
 	return ret_val;
+}
+
+int open_fifo_check(char * host_name, int uid, int pid, struct stat *pipe_info) {
+	lock();
+	int host_id_index = get_host_index(host_name);
+    int sub_id_index = get_subject_id_index(host_id_index, uid, pid);
+	int pipe_index = get_pipe_index(host_id_index, pipe_info->st_dev, pipe_info->st_ino);
+	if(pipe_index == -1) {
+		pipe_index = add_new_pipe(host_id_index, pipe_info->st_dev, pipe_info->st_ino, 1, get_all_users(get_number_of_users()), 0);
+		add_new_pipe_mapping(sub_id_index, pipe_index, 1);
+	} else {
+		increase_pipe_ref_count(pipe_index);
+		if(increment_pipe_mapping_ref_count(sub_id_index, pipe_index) == -1)
+			add_new_pipe_mapping(sub_id_index, pipe_index, 1);
+	}
+	unlock();
+
+	return 1;
+}
+
+int create_pipe_check(char * host_name, int uid, int pid, struct stat *pipe_info) {
+	lock();
+	int host_id_index = get_host_index(host_name);
+    int sub_id_index = get_subject_id_index(host_id_index, uid, pid);
+	SUBJECT subject = get_subject(sub_id_index);
+
+	int pipe_index = add_new_pipe(host_id_index, pipe_info->st_dev, pipe_info->st_ino, 2, subject.readers, subject.writers);
+	add_new_pipe_mapping(sub_id_index, pipe_index, 2);
+	unlock();
+
+	return 1;
+}
+
+int pipe_read_check(char * host_name, int uid, int pid, struct stat *pipe_info) {
+	lock();
+	int ret_val = 0;
+
+	int host_id_index = get_host_index(host_name);
+    int sub_id_index = get_subject_id_index(host_id_index, uid, pid);
+	SUBJECT subject = get_subject(sub_id_index);
+
+	int pipe_index = get_pipe_index(host_id_index, pipe_info->st_dev, pipe_info->st_ino);
+	PIPE_OBJECT pipe_obj = get_pipe(pipe_index);
+
+	if(is_user_in_set(subject.owner, &pipe_obj.readers)) {
+		if(pipe_obj.readers != subject.readers || pipe_obj.writers != subject.writers)
+			update_subject_label(sub_id_index, set_intersection(&subject.readers, &pipe_obj.readers), set_union(&subject.writers, &pipe_obj.writers));
+
+		ret_val = 1;
+	}
+	unlock();
+
+	return ret_val;
+}
+
+int pipe_write_check(char * host_name, int uid, int pid, struct stat *pipe_info) {
+	lock();
+	int ret_val = 1;
+
+	int host_id_index = get_host_index(host_name);
+    int sub_id_index = get_subject_id_index(host_id_index, uid, pid);
+	SUBJECT subject = get_subject(sub_id_index);
+
+	int pipe_index = get_pipe_index(host_id_index, pipe_info->st_dev, pipe_info->st_ino);
+	PIPE_OBJECT pipe_obj = get_pipe(pipe_index);
+
+	if(pipe_obj.readers != subject.readers || pipe_obj.writers != subject.writers)
+		update_pipe_label(pipe_index, set_intersection(&subject.readers, &pipe_obj.readers), set_union(&subject.writers, &pipe_obj.writers));
+
+	unlock();
+
+	return ret_val;
+}
+
+int pipe_close_check(char * host_name, int uid, int pid, struct stat *pipe_info) {
+	lock();
+
+	int host_id_index = get_host_index(host_name);
+    int sub_id_index = get_subject_id_index(host_id_index, uid, pid);
+	int pipe_index = get_pipe_index(host_id_index, pipe_info->st_dev, pipe_info->st_ino);
+
+	remove_pipe(host_id_index, pipe_info->st_dev, pipe_info->st_ino);
+	decrement_pipe_mapping_ref_count(sub_id_index, pipe_index);
+
+	unlock();
+
+	return 1;
 }
 
 #endif

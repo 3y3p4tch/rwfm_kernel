@@ -11,6 +11,7 @@ echo "" >> $macro_file_name
 
 echo "#define RULE_ENGINE_SEMAPHORE \"/rule_engine_semaphore\"" >> $macro_file_name
 echo "#define PIPE_SEMAPHORE \"/pipe_semaphore\"" >> $macro_file_name
+echo "#define FORK_LOCK \"/fork_lock\"" >> $macro_file_name
 echo "" >> $macro_file_name
 
 echo "#define REQUEST_FIFO_PATH \"/tmp/request_fifo\"" >> $macro_file_name
@@ -25,6 +26,7 @@ echo "" >> $macro_file_name
 
 echo "#define PIPE_READER 0" >> $macro_file_name
 echo "#define PIPE_WRITER 1" >> $macro_file_name
+echo "#define PIPE_RDWR 2" >> $macro_file_name
 echo "" >> $macro_file_name
 
 while IFS="" read -r line || [[ -n "$line" ]]; do

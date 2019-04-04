@@ -117,4 +117,12 @@ int underlying_getpeername(int sockfd, struct sockaddr *addr, socklen_t *addrlen
     return (*underlying)(sockfd, addr, addrlen);
 }
 
+int underlying_pipe(int pipefd[2]) {
+	static int (*underlying)(int *) = 0;
+    if (!underlying) {
+        underlying = dlsym(get_libc(), "pipe");
+    }
+    return (*underlying)(pipefd);
+}
+
 #endif

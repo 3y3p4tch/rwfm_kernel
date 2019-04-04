@@ -18,17 +18,26 @@ void debuglog(char *log) {
     underlying_close(logfd);
 }
 
-pid_t fork(void) {
-    pid_t pid = underlying_fork();
+pid_t fork(void) {    
     if(is_rwfm_enabled()) {
+		mode_t curmask = umask(0);
+		sem_open(FORK_LOCK, O_CREAT, 0666, 0);
+		umask(curmask);
+		pid_t pid = underlying_fork();
         if(pid == 0) {
             char host_name[1024];
             sprintf(host_name, HOSTNAME);
             fork_check(host_name, getuid(), getpid(), getppid());
-        }
-    }
-
-    return pid;
+			sem_t * sem_id = sem_open(FORK_LOCK, 0);
+			sem_post(sem_id);
+        } else {
+			sem_t * sem_id = sem_open(FORK_LOCK, 0);
+			sem_wait(sem_id);
+			sem_unlink(FORK_LOCK);
+		}
+		return pid;
+    } else
+		return underlying_fork();
 }
 
 int open(const char *path, int flags) {
@@ -44,7 +53,10 @@ int open(const char *path, int flags) {
         char host_name[1024];
         sprintf(host_name, HOSTNAME);
 
-        open_check(host_name, &file_info, fd, getuid(), getpid());
+		if(S_ISREG(file_info.st_mode))
+	        file_open_check(host_name, &file_info, fd, getuid(), getpid());
+		else if(S_ISFIFO(file_info.st_mode))
+			open_fifo_check(host_name, getuid(), getpid(), &file_info);
     }
     return fd;
 }
@@ -56,13 +68,19 @@ ssize_t read(int fd, void *buf, size_t count) {
     struct stat file_info;
     fstat(fd, &file_info);
 
+	ssize_t ret = underlying_read(fd, buf, count);
+
     if(is_rwfm_enabled()) {
         if(S_ISREG(file_info.st_mode) && file_read_check(host_name, getuid(), getpid(), fd) != 1) {
+			memset(buf, '\0', count);
             return -1;
-        }
+        } else if(S_ISFIFO(file_info.st_mode) && pipe_read_check(host_name, getuid(), getpid(), &file_info) != 1) {
+			memset(buf, '\0', count);
+			return -1;
+		}
     }
 
-    return underlying_read(fd, buf, count);
+    return ret;
 }
 
 ssize_t write(int fd, const void *buf, size_t count) {
@@ -75,7 +93,9 @@ ssize_t write(int fd, const void *buf, size_t count) {
     if(is_rwfm_enabled()) {
         if(S_ISREG(file_info.st_mode) && file_write_check(host_name, getuid(), getpid(), fd) != 1) {
             return -1;
-        }
+        } else if(S_ISFIFO(file_info.st_mode) && pipe_write_check(host_name, getuid(), getpid(), &file_info) != 1) {
+			return -1;
+		}
     }
 
     return underlying_write(fd, buf, count);
@@ -143,16 +163,40 @@ ssize_t recv(int sockfd, void *buf, size_t len, int flags) {
 	return ret;
 }
 
+int pipe(int pipefd[2]) {
+	char host_name[1024];
+    sprintf(host_name, HOSTNAME);
+
+	int ret = underlying_pipe(pipefd);
+
+	if(!is_rwfm_enabled() || ret == -1) {
+		return ret;
+	}
+
+	struct stat pipe_info;
+	fstat(pipefd[0], &pipe_info);
+
+	if(create_pipe_check(host_name, getuid(), getpid(), &pipe_info) != 1) {
+		memset(pipefd, '\0', 2);
+		pipefd = NULL;
+		return -1;
+	}
+
+	return ret;
+}
+
 int close(int fd) {
     char host_name[1024];
     sprintf(host_name, HOSTNAME);
     struct stat file_info;
     if(fstat(fd, &file_info) == -1)
         return -1;
-    if((file_info.st_mode & S_IFMT) == S_IFREG)
+    if(S_ISREG(file_info.st_mode))
         file_close_check(host_name, getuid(), getpid(), fd);
-    else if((file_info.st_mode & S_IFMT) == S_IFSOCK)
+    else if(S_ISSOCK(file_info.st_mode))
         socket_close_check(host_name, getuid(), getpid(), fd);
+    else if(S_ISFIFO(file_info.st_mode))
+		pipe_close_check(host_name, getuid(), getpid(), &file_info);
 
     return underlying_close(fd);
 }
