@@ -1,6 +1,6 @@
 macro_file_name="database_macros.h"
 database_ops_file_name="database_operations.txt"
-count=0
+count=1
 
 rm -f $macro_file_name
 touch $macro_file_name
@@ -10,12 +10,12 @@ echo "#define _DB_MACROS_H_" >> $macro_file_name
 echo "" >> $macro_file_name
 
 echo "#define RULE_ENGINE_SEMAPHORE \"/rule_engine_semaphore\"" >> $macro_file_name
-echo "#define PIPE_SEMAPHORE \"/pipe_semaphore\"" >> $macro_file_name
 echo "#define FORK_LOCK \"/fork_lock\"" >> $macro_file_name
 echo "" >> $macro_file_name
 
-echo "#define REQUEST_FIFO_PATH \"/tmp/request_fifo\"" >> $macro_file_name
-echo "#define RESPONSE_FIFO_PATH \"/tmp/response_fifo\"" >> $macro_file_name
+echo "#define MQ_FILE_PATH \"/tmp/msg_queue_file\"" >> $macro_file_name
+echo "#define REQUEST_MQ_PROJ_ID 1" >> $macro_file_name
+echo "#define RESPONSE_MQ_PROJ_ID 2" >> $macro_file_name
 echo "" >> $macro_file_name
 
 echo "#define REQUEST_DELIM \" \"" >> $macro_file_name

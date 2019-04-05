@@ -10,6 +10,15 @@ typedef char * HOST;
 typedef unsigned int uint;
 typedef unsigned long ulong;
 
+typedef struct mq_msg {
+	int msg_type;
+	char msg_str[1024];
+} MQ_MSG;
+
+typedef struct mq_buffer {
+	long pid;
+	MQ_MSG msg;
+} MQ_BUFFER;
 
 typedef struct user_id {
     uint uid;

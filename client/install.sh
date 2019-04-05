@@ -28,10 +28,9 @@ mkdir -p /opt/secos/bin/
 cp -f database_server secure_shell enable_rwfm /opt/secos/bin/
 chmod +x /opt/secos/bin/*
 
-mkfifo /tmp/request_fifo
-mkfifo /tmp/response_fifo
+touch /tmp/msg_queue_file
 
-chmod 777 /tmp/request_fifo /tmp/response_fifo
+chmod 777 /tmp/msg_queue_file
 
 /opt/secos/bin/database_server &
 echo "database server started"
