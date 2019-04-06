@@ -194,9 +194,8 @@ int close(int fd) {
     struct stat file_info;
     if(fstat(fd, &file_info) == -1)
         return -1;
-    if(S_ISREG(file_info.st_mode))
-        file_close_check(host_name, getuid(), getpid(), fd);
-    else if(S_ISSOCK(file_info.st_mode))
+
+    if(S_ISSOCK(file_info.st_mode))
         socket_close_check(host_name, getuid(), getpid(), fd);
     else if(S_ISFIFO(file_info.st_mode))
 		pipe_close_check(host_name, getuid(), getpid(), &file_info);

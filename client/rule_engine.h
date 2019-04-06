@@ -66,8 +66,6 @@ int file_open_check(char * host_name, struct stat * file_info, int fd, int uid, 
         
         int res_add_obj = add_object(object_id_index, object.owner, object.readers, object.writers);
     }
-
-	add_fd_mapping(subject_id_index, object_id_index, fd);
 	unlock();
 
     return 1;
@@ -75,9 +73,11 @@ int file_open_check(char * host_name, struct stat * file_info, int fd, int uid, 
 
 int file_read_check(char * host_name, int uid, int pid, int fd) {
 	lock();
+	struct stat file_info;
+	fstat(fd, &file_info);
     int host_id_index = get_host_index(host_name);
     int sub_id_index = get_subject_id_index(host_id_index, uid, pid);
-    int obj_id_index = get_obj_id_index_from_fd_map(sub_id_index, fd);
+    int obj_id_index = get_object_id_index(host_id_index, file_info.st_dev, file_info.st_ino);
 	int ret_val = 0;
 
     //If fd is not a file fd
@@ -102,9 +102,11 @@ int file_read_check(char * host_name, int uid, int pid, int fd) {
 
 int file_write_check(char * host_name, int uid, int pid, int fd) {
 	lock();
+	struct stat file_info;
+	fstat(fd, &file_info);
     int host_id_index = get_host_index(host_name);
     int sub_id_index = get_subject_id_index(host_id_index, uid, pid);
-    int obj_id_index = get_obj_id_index_from_fd_map(sub_id_index, fd);
+    int obj_id_index = get_object_id_index(host_id_index, file_info.st_dev, file_info.st_ino);
 	int ret_val = 0;
 
     //If fd is not a file fd
@@ -122,16 +124,6 @@ int file_write_check(char * host_name, int uid, int pid, int fd) {
 	unlock();
 
     return ret_val;
-}
-
-int file_close_check(char * host_name, int uid, int pid, int fd) {
-	lock();
-    int host_id_index = get_host_index(host_name);
-    int sub_id_index = get_subject_id_index(host_id_index, uid, pid);
-
-    int ret_val = remove_fd_mapping(sub_id_index, fd);
-	unlock();
-	return ret_val;
 }
 
 int connect_check(char * host_name, int uid, int pid, int sock_fd, struct sockaddr_in *peer_addr) {

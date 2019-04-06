@@ -142,14 +142,6 @@ char * get_request_msg(int req_type) {
             return "UPDATE_PIPE_LABEL_OP";
 		case REMOVE_PIPE_OP:
             return "REMOVE_PIPE_OP";
-        case ADD_NEW_FD_MAPPING_OP:
-            return "ADD_NEW_FD_MAPPING_OP";
-        case GET_OBJ_ID_FROM_FD_MAP_OP:
-            return "GET_OBJ_ID_FROM_FD_MAP_OP";
-        case GET_SUB_ID_FROM_FD_MAP_OP:
-            return "GET_SUB_ID_FROM_FD_MAP_OP";
-        case REMOVE_FD_MAPPING_OP:
-            return "REMOVE_FD_MAPPING_OP";
 		case ADD_NEW_PIPE_REF_MAPPING_OP:
             return "ADD_NEW_PIPE_REF_MAPPING_OP";
 		case INCREMENT_PIPE_MAPPING_REF_COUNT_OP:
@@ -566,55 +558,7 @@ int do_operation(int operation, char **req_args, int num_args, long pid) {
         }
 
 
-        case ADD_NEW_FD_MAPPING_OP:
-        {
-            if(num_args != 3)
-                return -1;
-            FD_MAP fd_map;
-            fd_map.sub_id_index = strtol(req_args[0], NULL, 10);
-            fd_map.obj_id_index = strtol(req_args[1], NULL, 10);
-            fd_map.fd = strtol(req_args[2], NULL, 10);
-            response.msg.msg_type = ADD_NEW_FD_MAPPING_OP;
-			sprintf(response.msg.msg_str, "%d", add_new_mapping(fd_map));
-            write_response(&response);
-            break;
-        }
-        case GET_OBJ_ID_FROM_FD_MAP_OP:
-        {
-            if(num_args != 2)
-                return -1;
-            int sub_id_ind = strtol(req_args[0], NULL, 10);
-            int fd_obj = strtol(req_args[1], NULL, 10);
-            response.msg.msg_type = GET_OBJ_ID_FROM_FD_MAP_OP;
-			sprintf(response.msg.msg_str, "%d", get_obj_id_index_from_sub_id_and_fd(sub_id_ind, fd_obj));
-            write_response(&response);
-            break;
-        }
-        case GET_SUB_ID_FROM_FD_MAP_OP:
-        {
-            if(num_args != 2)
-                return -1;
-            int obj_id_ind = strtol(req_args[0], NULL, 10);
-            int fd_sub = strtol(req_args[1], NULL, 10);
-            response.msg.msg_type = GET_SUB_ID_FROM_FD_MAP_OP;
-			sprintf(response.msg.msg_str, "%d", get_obj_id_index_from_sub_id_and_fd(obj_id_ind, fd_sub));
-            write_response(&response);
-            break;
-        }
-        case REMOVE_FD_MAPPING_OP:
-        {
-            if(num_args != 2)
-                return -1;
-            int sub_id_ind = strtol(req_args[0], NULL, 10);
-            int fd_obj = strtol(req_args[1], NULL, 10);
-            response.msg.msg_type = REMOVE_FD_MAPPING_OP;
-			sprintf(response.msg.msg_str, "%d", remove_fd_map(sub_id_ind, fd_obj));
-            write_response(&response);
-            break;
-        }
-
-
-		case ADD_NEW_PIPE_REF_MAPPING_OP:
+        case ADD_NEW_PIPE_REF_MAPPING_OP:
         {
             if(num_args != 3)
                 return -1;

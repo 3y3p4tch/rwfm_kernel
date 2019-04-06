@@ -370,58 +370,6 @@ int remove_pipe(int host_id_index, ulong device_id, ulong inode_number) {
 }
 
 
-extern int num_fd_maps;
-extern FD_MAP * fd_map;
-
-int match_fd_map(FD_MAP m1, FD_MAP m2) {
-    return m1.sub_id_index == m2.sub_id_index
-            && m1.obj_id_index == m2.obj_id_index
-            && m1.fd == m2.fd;
-}
-
-int add_new_mapping(FD_MAP new_map) {
-    for(int i=0;i<num_fd_maps;i++) {
-        if(match_fd_map(fd_map[i], new_map))
-            return i;
-    }
-
-    fd_map = (FD_MAP *)realloc(fd_map, (num_fd_maps+1) * sizeof(FD_MAP));
-    fd_map[num_fd_maps] = new_map;
-
-    return num_fd_maps++;
-}
-
-int get_obj_id_index_from_sub_id_and_fd(uint sub_id_index, uint fd) {
-    for(int i=0;i<num_fd_maps;i++) {
-        if(fd_map[i].sub_id_index == sub_id_index && fd_map[i].fd == fd)
-            return fd_map[i].obj_id_index;
-    }
-
-    return -1;
-}
-
-int get_sub_id_index_from_obj_id_and_fd(uint obj_id_index, uint fd) {
-    for(int i=0;i<num_fd_maps;i++) {
-        if(fd_map[i].obj_id_index == obj_id_index && fd_map[i].fd == fd)
-            return fd_map[i].sub_id_index;
-    }
-
-    return -1;
-}
-
-int remove_fd_map(uint sub_id_index, uint fd) {
-    for(int i=0;i<num_fd_maps;i++) {
-        if(fd_map[i].sub_id_index == sub_id_index && fd_map[i].fd == fd) {
-            for(int j=i;j<num_fd_maps-1;j++)
-                fd_map[j] = fd_map[j+1];
-            fd_map = (FD_MAP *)realloc(fd_map, (--num_fd_maps) * sizeof(FD_MAP));
-            return num_fd_maps;
-        }
-    }
-
-    return -1;
-}
-
 extern int num_pipe_ref_maps;
 extern PIPE_REF_MAP * pipe_ref_map;
 
@@ -471,11 +419,6 @@ Parameters  :   subject id index of source and destination subjects
 Return Value:   Always succeeds and returns 0.
 */
 
-void copy_fd_map(int new_sub_id, int old_fd_map_index) {
-    int new_map_index = add_new_mapping(fd_map[old_fd_map_index]);
-    fd_map[new_map_index].sub_id_index = new_sub_id;
-}
-
 void copy_pipe_map(int new_sub_id, int old_pipe_map_index) {
     int new_map_index = add_new_pipe_mapping(pipe_ref_map[old_pipe_map_index]);
     pipe_ref_map[new_map_index].sub_id_index = new_sub_id;
@@ -484,11 +427,6 @@ void copy_pipe_map(int new_sub_id, int old_pipe_map_index) {
 }
 
 int copy_subject_info(uint src_sub_id_index, uint dstn_sub_id_index) {
-    for(int i=0;i<num_fd_maps;i++) {
-        if(fd_map[i].sub_id_index == src_sub_id_index)
-            copy_fd_map(dstn_sub_id_index, i);
-    }
-
 	for(int i=0;i<num_pipe_ref_maps;i++) {
         if(pipe_ref_map[i].sub_id_index == src_sub_id_index)
             copy_pipe_map(dstn_sub_id_index, i);

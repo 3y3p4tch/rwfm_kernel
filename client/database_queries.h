@@ -385,47 +385,6 @@ int remove_pipe(int host_id_index, ulong device_id, ulong inode_number) {
 }
 
 
-int add_fd_mapping(int sub_id_index, int obj_id_index, int fd) {
-    MQ_BUFFER request, response;
-	request.msg.msg_type = ADD_NEW_FD_MAPPING_OP;
-    sprintf(request.msg.msg_str, "%d %d %d", sub_id_index, obj_id_index, fd);
-    write_request(&request);
-    read_response(&response);
-	
-    return strtol(response.msg.msg_str, NULL, 10);
-}
-
-int get_obj_id_index_from_fd_map(int sub_id_index, int fd) {
-    MQ_BUFFER request, response;
-	request.msg.msg_type = GET_OBJ_ID_FROM_FD_MAP_OP;
-    sprintf(request.msg.msg_str, "%d %d", sub_id_index, fd);
-    write_request(&request);
-    read_response(&response);
-	
-    return strtol(response.msg.msg_str, NULL, 10);
-}
-
-int get_sub_id_index_from_fd_map(int obj_id_index, int fd) {
-    MQ_BUFFER request, response;
-	request.msg.msg_type = GET_SUB_ID_FROM_FD_MAP_OP;
-    sprintf(request.msg.msg_str, "%d %d", obj_id_index, fd);
-    write_request(&request);
-    read_response(&response);
-	
-    return strtol(response.msg.msg_str, NULL, 10);
-}
-
-int remove_fd_mapping(int sub_id_index, int fd) {
-    MQ_BUFFER request, response;
-	request.msg.msg_type = REMOVE_FD_MAPPING_OP;
-    sprintf(request.msg.msg_str, "%d %d", sub_id_index, fd);
-    write_request(&request);
-    read_response(&response);
-	
-    return strtol(response.msg.msg_str, NULL, 10);
-}
-
-
 int add_new_pipe_mapping(int sub_id_index, int pipe_index, int ref_count) {
 	MQ_BUFFER request, response;
 	request.msg.msg_type = ADD_NEW_PIPE_REF_MAPPING_OP;
