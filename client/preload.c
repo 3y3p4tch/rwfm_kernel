@@ -186,6 +186,9 @@ int pipe(int pipefd[2]) {
 }
 
 int close(int fd) {
+	if(!is_rwfm_enabled())
+		return underlying_close(fd);
+
     char host_name[1024];
     sprintf(host_name, HOSTNAME);
     struct stat file_info;
