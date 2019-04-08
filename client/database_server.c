@@ -13,6 +13,7 @@ requet,checks which database operation needs to be done and executes it using th
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <errno.h>
 #include "database_helper_functions.h"
 #include "database_macros.h"
 
@@ -620,7 +621,12 @@ int do_operation(int operation, char **req_args, int num_args, long pid) {
 int start_server() {
     while(1) {
         MQ_BUFFER request;
-        read_request(&request);
+		int read_val;
+        while(((read_val = read_request(&request)) == -1) && (errno == EINTR));
+		if(read_val == -1) {
+			perror("Stopping database server due to error in read");
+			return -1;
+		}
         printf("Received request of type %s with args:%s\n", get_request_msg(request.msg.msg_type), request.msg.msg_str);
         char **req_args = (char**)malloc(MAX_REQUEST_LENGTH * sizeof(char*));
         int num_args = get_args_from_request(req_args, request.msg.msg_str);
