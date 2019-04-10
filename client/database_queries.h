@@ -13,6 +13,7 @@ request to the database_server via the fifo. And after getting back the response
 #include <string.h>
 #include <semaphore.h>
 #include <sys/ipc.h>
+#include <sys/shm.h>
 #include <sys/msg.h>
 #include "underlying_libc_functions.h"
 #include "database_macros.h"
@@ -39,18 +40,18 @@ int get_args_from_request(char **args, char *req) {
 
 int read_response(MQ_BUFFER *res_buff) {
     key_t key = ftok(MQ_FILE_PATH, RESPONSE_MQ_PROJ_ID);
-	int msgqid = msgget(key, 0666 | IPC_CREAT);
+	int msgqid = underlying_msgget(key, 0666 | IPC_CREAT);
 
-    return msgrcv(msgqid, res_buff, sizeof(res_buff->msg), getpid(), 0);
+    return underlying_msgrcv(msgqid, res_buff, sizeof(res_buff->msg), getpid(), 0);
 }
 
 
 int write_request(MQ_BUFFER *req_buff) {
 	req_buff->pid = getpid();
     key_t key = ftok(MQ_FILE_PATH, REQUEST_MQ_PROJ_ID);
-	int msgqid = msgget(key, 0666 | IPC_CREAT);
+	int msgqid = underlying_msgget(key, 0666 | IPC_CREAT);
 
-    return msgsnd(msgqid, req_buff, sizeof(req_buff->msg), 0);
+    return underlying_msgsnd(msgqid, req_buff, sizeof(req_buff->msg), 0);
 }
 
 
@@ -409,6 +410,53 @@ int decrement_pipe_mapping_ref_count(int sub_id_index, int pipe_index) {
 	MQ_BUFFER request, response;
 	request.msg.msg_type = DECREMENT_PIPE_MAPPING_REF_COUNT_OP;
     sprintf(request.msg.msg_str, "%d %d", sub_id_index, pipe_index);
+    write_request(&request);
+    read_response(&response);
+	
+    return strtol(response.msg.msg_str, NULL, 10);
+}
+
+
+int add_msgq_object(int host_id_index, int msgq_id, int owner, USER_SET readers, USER_SET writers) {
+	MQ_BUFFER request, response;
+	request.msg.msg_type = ADD_MSGQ_OBJECT_OP;
+    sprintf(request.msg.msg_str, "%d %d %d %llx %llx", host_id_index, msgq_id, owner, readers, writers);
+    write_request(&request);
+    read_response(&response);
+	
+    return strtol(response.msg.msg_str, NULL, 10);
+}
+
+int get_msgq_object_index(int host_id_index, int msgq_id) {
+	MQ_BUFFER request, response;
+	request.msg.msg_type = GET_MSGQ_OBJECT_INDEX_OP;
+    sprintf(request.msg.msg_str, "%d %d", host_id_index, msgq_id);
+    write_request(&request);
+    read_response(&response);
+	
+    return strtol(response.msg.msg_str, NULL, 10);
+}
+
+MSGQ_OBJECT get_msgq_object(int host_id_index, int msgq_id) {
+	MQ_BUFFER request, response;
+	request.msg.msg_type = GET_MSGQ_OBJECT_OP;
+    sprintf(request.msg.msg_str, "%d %d", host_id_index, msgq_id);
+    write_request(&request);
+    read_response(&response);
+	char **arguments = (char**)malloc(MAX_REQUEST_LENGTH * sizeof(char*));
+    get_args_from_request(arguments, response.msg.msg_str);
+    MSGQ_OBJECT msgq_obj;
+	msgq_obj.owner = strtol(arguments[0], NULL, 10);
+    msgq_obj.readers = strtoull(arguments[1], NULL, 16);
+    msgq_obj.writers = strtoull(arguments[2], NULL, 16);
+
+    return msgq_obj;
+}
+
+int remove_msgq_object(int host_id_index, int msgq_id) {
+	MQ_BUFFER request, response;
+	request.msg.msg_type = REMOVE_MSGQ_OBJECT_OP;
+    sprintf(request.msg.msg_str, "%d %d", host_id_index, msgq_id);
     write_request(&request);
     read_response(&response);
 	

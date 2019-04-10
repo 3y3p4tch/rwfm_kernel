@@ -50,10 +50,9 @@ void fork_check(char* host_name, int uid, int child_pid, int parent_pid) {
 	unlock();
 }
 
-int file_open_check(char * host_name, struct stat * file_info, int fd, int uid, int pid){
+int file_open_check(char * host_name, struct stat * file_info){
 	lock();
     int host_id_index = get_host_index(host_name);
-	int subject_id_index = get_subject_id_index(host_id_index, uid, pid);
     int object_id_index = get_object_id_index(host_id_index, file_info->st_dev, file_info->st_ino);
     
 	if(object_id_index == -1) {
@@ -62,9 +61,9 @@ int file_open_check(char * host_name, struct stat * file_info, int fd, int uid, 
         OBJECT object;
         object.obj_id_index = object_id_index;
         object.owner = get_user_id_index(host_id_index, file_info->st_uid);
-        infer_labels(&object, file_info, host_id_index);
+        infer_file_labels(&object, file_info, host_id_index);
         
-        int res_add_obj = add_object(object_id_index, object.owner, object.readers, object.writers);
+        add_object(object_id_index, object.owner, object.readers, object.writers);
     }
 	unlock();
 
@@ -90,9 +89,7 @@ int file_read_check(char * host_name, int uid, int pid, int fd) {
 		if(is_user_in_set(subject.owner, &object.readers) == 1) {
 		    subject.readers = set_intersection(&subject.readers, &object.readers);
 		    subject.writers = set_union(&subject.writers, &object.writers);
-		    update_subject_label(sub_id_index, subject.readers, subject.writers);
-
-		    ret_val = 1;
+		    ret_val = update_subject_label(sub_id_index, subject.readers, subject.writers);
 		}
 	}
 	unlock();
@@ -229,9 +226,7 @@ int recv_check(char * host_name, int uid, int pid, int sock_fd) {
 
 			if(is_user_in_set(subject.owner, &conn_obj.readers)) {
 				if(conn_obj.readers != subject.readers || conn_obj.writers != subject.writers)
-					update_subject_label(sub_id_index, set_intersection(&subject.readers, &conn_obj.readers), set_union(&subject.writers, &conn_obj.writers));
-
-				ret_val = 1;
+					ret_val = update_subject_label(sub_id_index, set_intersection(&subject.readers, &conn_obj.readers), set_union(&subject.writers, &conn_obj.writers));
 			}
 		}
 	}
@@ -301,9 +296,7 @@ int pipe_read_check(char * host_name, int uid, int pid, struct stat *pipe_info) 
 
 	if(is_user_in_set(subject.owner, &pipe_obj.readers)) {
 		if(pipe_obj.readers != subject.readers || pipe_obj.writers != subject.writers)
-			update_subject_label(sub_id_index, set_intersection(&subject.readers, &pipe_obj.readers), set_union(&subject.writers, &pipe_obj.writers));
-
-		ret_val = 1;
+			ret_val = update_subject_label(sub_id_index, set_intersection(&subject.readers, &pipe_obj.readers), set_union(&subject.writers, &pipe_obj.writers));
 	}
 	unlock();
 
@@ -342,6 +335,74 @@ int pipe_close_check(char * host_name, int uid, int pid, struct stat *pipe_info)
 	unlock();
 
 	return 1;
+}
+
+int create_msgq_check(char * host_name, int msgq_id) {
+	lock();
+    int host_id_index = get_host_index(host_name);
+    int msgq_object_index = get_msgq_object_index(host_id_index, msgq_id);
+    
+	if(msgq_object_index == -1) {
+		struct msqid_ds msgq_info;
+		underlying_msgctl(msgq_id, IPC_STAT, &msgq_info);
+
+        MSGQ_OBJECT msgq_object;
+        msgq_object.host_index = host_id_index;
+        msgq_object.msgq_id = msgq_id;
+        msgq_object.owner = get_user_id_index(host_id_index, msgq_info.msg_perm.uid);
+        infer_msgq_labels(&msgq_object, &msgq_info, host_id_index);
+        
+        add_msgq_object(host_id_index, msgq_id, msgq_object.owner, msgq_object.readers, msgq_object.writers);
+    }
+	unlock();
+
+    return 1;
+}
+
+int msgrcv_check(char * host_name, int uid, int pid, int msgq_id) {
+	lock();
+    int host_id_index = get_host_index(host_name);
+    int sub_id_index = get_subject_id_index(host_id_index, uid, pid);
+	SUBJECT subject = get_subject(sub_id_index);
+
+    MSGQ_OBJECT msgq_object = get_msgq_object(host_id_index, msgq_id);
+	int ret_val = 0;
+
+	if(is_user_in_set(subject.owner, &msgq_object.readers) == 1)
+	    ret_val = update_subject_label(sub_id_index, set_intersection(&subject.readers, &msgq_object.readers), set_union(&subject.writers, &msgq_object.writers));
+	unlock();
+
+    return ret_val;
+}
+
+int msgsnd_check(char * host_name, int uid, int pid, int msgq_id) {
+	lock();
+    int host_id_index = get_host_index(host_name);
+    int sub_id_index = get_subject_id_index(host_id_index, uid, pid);
+	SUBJECT subject = get_subject(sub_id_index);
+
+    MSGQ_OBJECT msgq_object = get_msgq_object(host_id_index, msgq_id);
+	int ret_val = 0;
+
+	if(is_user_in_set(subject.owner, &msgq_object.writers)
+		    && is_superset_of(&subject.readers, &msgq_object.readers)
+		    && is_subset_of(&subject.writers, &msgq_object.writers))
+	    ret_val = 1;
+	unlock();
+
+    return ret_val;
+}
+
+int remove_msgq_check(char * host_name, int msgq_id) {
+	lock();
+    int host_id_index = get_host_index(host_name);
+    int msgq_object_index = get_msgq_object_index(host_id_index, msgq_id);
+    
+	if(msgq_object_index != -1)
+        remove_msgq_object(host_id_index, msgq_id);
+	unlock();
+
+    return 1;
 }
 
 #endif

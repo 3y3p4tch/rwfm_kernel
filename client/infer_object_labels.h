@@ -13,15 +13,10 @@ USER_SET get_all_users(int number_of_users) {
     return ans-1;
 }
 
-int infer_labels(OBJECT * object, struct stat * object_info, int host_id_index) {
+int infer_file_labels(OBJECT * object, struct stat * object_info, int host_id_index) {
     int user_id_index = get_user_id_index(host_id_index, object_info->st_uid);
 	object->readers = 0;
 	object->writers = 0;
-
-	//Taking current file creation mask of process into consideration for actual mode to be set
-	mode_t curmask = umask(0);
-	umask(curmask);
-	object_info->st_mode = object_info->st_mode & (~curmask);
 
 	int is_user_reader = object_info->st_mode & S_IRUSR ? 1 : 0;
     int is_user_writer = object_info->st_mode & S_IWUSR ? 1 : 0;
@@ -61,6 +56,53 @@ int infer_labels(OBJECT * object, struct stat * object_info, int host_id_index) 
 
     if(object_info->st_mode & S_IWOTH)
         object->writers |= other_members;
+
+    return 0;       
+}
+
+int infer_msgq_labels(MSGQ_OBJECT * msgq_object, struct msqid_ds * msgq_info, int host_id_index) {
+    int user_id_index = get_user_id_index(host_id_index, msgq_info->msg_perm.uid);
+	msgq_object->readers = 0;
+	msgq_object->writers = 0;
+
+	int is_user_reader = msgq_info->msg_perm.mode & S_IRUSR ? 1 : 0;
+    int is_user_writer = msgq_info->msg_perm.mode & S_IWUSR ? 1 : 0;
+
+    if(user_id_index==-1)
+        return -1;
+    
+    if(is_user_reader)
+        add_user_to_label(user_id_index, &(msgq_object->readers));
+
+    if(is_user_writer)
+        add_user_to_label(user_id_index, &(msgq_object->writers));
+
+    int group_id_index = get_group_id_index(host_id_index, msgq_info->msg_perm.gid);    
+    USER_SET group_members = get_members_from_group_id(group_id_index);
+    
+    if(msgq_info->msg_perm.mode & S_IRGRP)
+        msgq_object->readers |= group_members;
+
+    if(msgq_info->msg_perm.mode & S_IWGRP)
+        msgq_object->writers |= group_members; 
+
+    if(!is_user_reader)
+        remove_user_from_set(user_id_index, &(msgq_object->readers));
+    
+    if(!is_user_writer)
+        remove_user_from_set(user_id_index, &(msgq_object->writers));
+    
+    int number_of_users = get_number_of_users();
+    USER_SET all_users = get_all_users(number_of_users);
+
+    USER_SET other_members = all_users & (~group_members);
+    remove_user_from_set(user_id_index, &other_members);
+    
+    if(msgq_info->msg_perm.mode & S_IROTH)
+        msgq_object->readers |= other_members;
+
+    if(msgq_info->msg_perm.mode & S_IWOTH)
+        msgq_object->writers |= other_members;
 
     return 0;       
 }

@@ -46,11 +46,11 @@ SOCKET_CONNECTION_OBJECT * all_socket_connections = NULL;
 int num_pipe_objects = 0;
 PIPE_OBJECT * all_pipe_objects = NULL;
 
-int num_fd_maps = 0;
-FD_MAP * fd_map = NULL;
-
 int num_pipe_ref_maps = 0;
 PIPE_REF_MAP * pipe_ref_map = NULL;
+
+int num_msgq_objects = 0;
+MSGQ_OBJECT * all_msgq_objects = NULL;
 
 int read_request(MQ_BUFFER *req_buff) {
 	key_t key = ftok(MQ_FILE_PATH, REQUEST_MQ_PROJ_ID);
@@ -149,6 +149,14 @@ char * get_request_msg(int req_type) {
             return "INCREMENT_PIPE_MAPPING_REF_COUNT_OP";
 		case DECREMENT_PIPE_MAPPING_REF_COUNT_OP:
             return "DECREMENT_PIPE_MAPPING_REF_COUNT_OP";
+		case ADD_MSGQ_OBJECT_OP:
+            return "ADD_MSGQ_OBJECT_OP";
+		case GET_MSGQ_OBJECT_INDEX_OP:
+            return "GET_MSGQ_OBJECT_INDEX_OP";
+		case GET_MSGQ_OBJECT_OP:
+            return "GET_MSGQ_OBJECT_OP";
+		case REMOVE_MSGQ_OBJECT_OP:
+            return "REMOVE_MSGQ_OBJECT_OP";
         case COPY_SUBJECT_FDS_OP:
             return "COPY_SUBJECT_FDS_OP";
         default:
@@ -594,6 +602,57 @@ int do_operation(int operation, char **req_args, int num_args, long pid) {
             write_response(&response);
             break;
         }
+
+
+		case ADD_MSGQ_OBJECT_OP:
+        {
+            if(num_args != 5)
+                return -1;
+            MSGQ_OBJECT object_add;
+            object_add.host_index = strtol(req_args[0], NULL, 10);
+            object_add.msgq_id = strtol(req_args[1], NULL, 10);
+            object_add.owner = strtol(req_args[2], NULL, 10);
+            object_add.readers = strtoull(req_args[3], NULL, 16);
+            object_add.writers = strtoull(req_args[4], NULL, 16);
+            response.msg.msg_type = ADD_MSGQ_OBJECT_OP;
+			sprintf(response.msg.msg_str, "%d", add_msgq_object(object_add));
+            write_response(&response);
+            break;
+        }
+		case GET_MSGQ_OBJECT_INDEX_OP:
+		{
+			if(num_args != 2)
+                return -1;
+			int host_index = strtol(req_args[0], NULL, 10);
+			int msgq_id = strtol(req_args[1], NULL, 10);
+			response.msg.msg_type = GET_MSGQ_OBJECT_INDEX_OP;
+			sprintf(response.msg.msg_str, "%d", get_msgq_object_index(host_index, msgq_id));
+            write_response(&response);
+			break;
+		}
+		case GET_MSGQ_OBJECT_OP:
+		{
+			if(num_args != 2)
+                return -1;
+			int host_index = strtol(req_args[0], NULL, 10);
+			int msgq_id = strtol(req_args[1], NULL, 10);
+			MSGQ_OBJECT msgq_object = all_msgq_objects[get_msgq_object_index(host_index, msgq_id)];
+			response.msg.msg_type = GET_MSGQ_OBJECT_OP;
+			sprintf(response.msg.msg_str, "%d %llx %llx", msgq_object.owner, msgq_object.readers, msgq_object.writers);
+            write_response(&response);
+			break;
+		}
+		case REMOVE_MSGQ_OBJECT_OP:
+		{
+			if(num_args != 2)
+                return -1;
+			int host_index = strtol(req_args[0], NULL, 10);
+			int msgq_id = strtol(req_args[1], NULL, 10);
+			response.msg.msg_type = REMOVE_MSGQ_OBJECT_OP;
+			sprintf(response.msg.msg_str, "%d", remove_msgq_object(host_index, msgq_id));
+            write_response(&response);
+			break;
+		}
 
 
         case COPY_SUBJECT_FDS_OP:

@@ -1,1 +1,1 @@
-rm -f sender receiver tmp_file
+rm -f sender sender_invalid receiver tmp_file secret_file

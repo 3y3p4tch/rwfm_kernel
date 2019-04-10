@@ -39,7 +39,7 @@ int is_user_in_set(int user_id_index, USER_SET * set) {
     USER_SET tmp = 1;
     tmp <<= user_id_index;
 	
-    return ((*set) & tmp) ? 1:0;
+    return ((*set) & tmp) ? 1 : 0;
 }
 
 USER_SET set_union(USER_SET * set1, USER_SET * set2) {

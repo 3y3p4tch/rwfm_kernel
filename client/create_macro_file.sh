@@ -21,12 +21,7 @@ echo "" >> $macro_file_name
 echo "#define REQUEST_DELIM \" \"" >> $macro_file_name
 echo "" >> $macro_file_name
 
-echo "#define MAX_REQUEST_LENGTH 1024" >> $macro_file_name
-echo "" >> $macro_file_name
-
-echo "#define PIPE_READER 0" >> $macro_file_name
-echo "#define PIPE_WRITER 1" >> $macro_file_name
-echo "#define PIPE_RDWR 2" >> $macro_file_name
+echo "#define MAX_REQUEST_LENGTH 512" >> $macro_file_name
 echo "" >> $macro_file_name
 
 while IFS="" read -r line || [[ -n "$line" ]]; do

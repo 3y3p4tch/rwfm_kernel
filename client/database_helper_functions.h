@@ -12,6 +12,9 @@ The functions declared here adds, deletes, modifies or fetches various informati
 
 #define MAX_HOST_SIZE 1024
 
+#define FROM_SUB 0
+#define FROM_SHM 1
+
 /*
 Functions that are related to HOSTs in database.
 num_hosts is total number of hosts.
@@ -249,7 +252,7 @@ int update_subject_label(int sub_id_index, USER_SET readers, USER_SET writers) {
     all_subjects[sub_index].readers = readers;
     all_subjects[sub_index].writers = writers;
 
-    return 0;
+    return 1;
 }
 
 extern int num_socket_connections;
@@ -409,6 +412,37 @@ int decrement_pipe_mapping_ref_count(int sub_id_index, int pipe_index) {
     pipe_ref_map = (PIPE_REF_MAP *)realloc(pipe_ref_map, (--num_pipe_ref_maps) * sizeof(PIPE_REF_MAP));
 
     return 0;
+}
+
+
+extern int num_msgq_objects;
+extern MSGQ_OBJECT * all_msgq_objects;
+
+int add_msgq_object(MSGQ_OBJECT msgq_object) {
+	all_msgq_objects = (MSGQ_OBJECT *)realloc(all_msgq_objects, (num_msgq_objects+1) * sizeof(MSGQ_OBJECT));
+    all_msgq_objects[num_msgq_objects] = msgq_object;
+
+    return num_msgq_objects++;
+}
+
+int get_msgq_object_index(int host_index, int msgq_id) {
+	for(int i=0;i<num_msgq_objects;i++) {
+		if(all_msgq_objects[i].host_index == host_index && all_msgq_objects[i].msgq_id == msgq_id)
+			return i;
+	}
+
+	return -1;
+}
+
+int remove_msgq_object(int host_index, int msgq_id) {
+	int msgq_index = get_msgq_object_index(host_index, msgq_id);
+	if(msgq_index == -1)
+		return -1;
+	for(int i=msgq_index;i<num_msgq_objects-1;i++)
+        all_msgq_objects[i] = all_msgq_objects[i+1];
+    all_msgq_objects = (MSGQ_OBJECT *)realloc(all_msgq_objects, (--num_msgq_objects) * sizeof(MSGQ_OBJECT));
+
+	return num_msgq_objects;
 }
 
 

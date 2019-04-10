@@ -125,4 +125,36 @@ int underlying_pipe(int pipefd[2]) {
     return (*underlying)(pipefd);
 }
 
+int underlying_msgget(key_t key, int msgflg) {
+	static int (*underlying)(key_t, int) = 0;
+    if (!underlying) {
+        underlying = dlsym(get_libc(), "msgget");
+    }
+    return (*underlying)(key, msgflg);
+}
+
+int underlying_msgsnd(int msqid, const void *msgp, size_t msgsz, int msgflg) {
+	static int (*underlying)(int, const void *, size_t, int) = 0;
+    if (!underlying) {
+        underlying = dlsym(get_libc(), "msgsnd");
+    }
+    return (*underlying)(msqid, msgp, msgsz, msgflg);
+}
+
+int underlying_msgrcv(int msqid, const void *msgp, size_t msgsz, long msgtyp, int msgflg) {
+	static int (*underlying)(int, const void *, size_t, long, int) = 0;
+    if (!underlying) {
+        underlying = dlsym(get_libc(), "msgrcv");
+    }
+    return (*underlying)(msqid, msgp, msgsz, msgtyp, msgflg);
+}
+
+int underlying_msgctl(int msqid, int cmd, struct msqid_ds *buf) {
+	static int (*underlying)(int, int, struct msqid_ds *) = 0;
+    if (!underlying) {
+        underlying = dlsym(get_libc(), "msgctl");
+    }
+    return (*underlying)(msqid, cmd, buf);
+}
+
 #endif

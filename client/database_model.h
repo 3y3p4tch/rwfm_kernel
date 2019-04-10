@@ -5,6 +5,8 @@ This file contains all the structures for all the objects which we keep in our d
 #ifndef _DB_MODEL_
 #define _DB_MODEL_
 
+#include "database_macros.h"
+
 typedef unsigned long long int USER_SET;
 typedef char * HOST;
 typedef unsigned int uint;
@@ -12,7 +14,7 @@ typedef unsigned long ulong;
 
 typedef struct mq_msg {
 	int msg_type;
-	char msg_str[1024];
+	char msg_str[MAX_REQUEST_LENGTH];
 } MQ_MSG;
 
 typedef struct mq_buffer {
@@ -79,16 +81,18 @@ typedef struct pipe_object {
 	USER_SET writers;
 } PIPE_OBJECT;
 
-typedef struct file_descriptor_map {
-    uint sub_id_index;
-    uint obj_id_index;
-    uint fd;
-} FD_MAP;
-
 typedef struct pipe_ref_map {
 	uint sub_id_index;
 	uint pipe_index;
 	uint ref_count;
 } PIPE_REF_MAP;
+
+typedef struct msgq_object {
+    uint host_index;
+	uint msgq_id;
+    uint owner;
+    USER_SET readers;
+    USER_SET writers;
+} MSGQ_OBJECT;
 
 #endif

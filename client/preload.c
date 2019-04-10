@@ -54,7 +54,7 @@ int open(const char *path, int flags) {
         sprintf(host_name, HOSTNAME);
 
 		if(S_ISREG(file_info.st_mode))
-	        file_open_check(host_name, &file_info, fd, getuid(), getpid());
+	        file_open_check(host_name, &file_info);
 		else if(S_ISFIFO(file_info.st_mode))
 			open_fifo_check(host_name, getuid(), getpid(), &file_info);
     }
@@ -181,6 +181,75 @@ int pipe(int pipefd[2]) {
 		pipefd = NULL;
 		return -1;
 	}
+
+	return ret;
+}
+
+int msgget(key_t key, int msgflg) {
+	char host_name[1024];
+    sprintf(host_name, HOSTNAME);
+
+	int ret = underlying_msgget(key, msgflg);
+
+	if(!is_rwfm_enabled() || ret == -1) {
+		return ret;
+	}
+
+	if(create_msgq_check(host_name, ret) != 1) {
+		return -1;
+	}
+
+	return ret;
+}
+
+int msgsnd(int msqid, const void *msgp, size_t msgsz, int msgflg) {
+	char host_name[1024];
+    sprintf(host_name, HOSTNAME);
+
+	if(!is_rwfm_enabled())
+		return underlying_msgsnd(msqid, msgp, msgsz, msgflg);
+
+	if(msgsnd_check(host_name, getuid(), getpid(), msqid) != 1)
+		return -1;
+
+	return underlying_msgsnd(msqid, msgp, msgsz, msgflg);
+}
+
+ssize_t msgrcv(int msqid, void *msgp, size_t msgsz, long msgtyp, int msgflg) {
+	char host_name[1024];
+    sprintf(host_name, HOSTNAME);
+
+	ssize_t ret = underlying_msgrcv(msqid, msgp, msgsz, msgtyp, msgflg);
+
+	if(!is_rwfm_enabled() || ret <= 0)
+		return ret;
+
+	if(msgrcv_check(host_name, getuid(), getpid(), msqid) != 1) {
+		memset(msgp, '\0', msgsz);
+		msgp = NULL;
+		return -1;
+	}
+
+	return ret;
+}
+
+int msgctl(int msqid, int cmd, struct msqid_ds *buf) {
+	char host_name[1024];
+    sprintf(host_name, HOSTNAME);
+
+	ssize_t ret = underlying_msgctl(msqid, cmd, buf);
+
+	if(!is_rwfm_enabled() || ret == -1)
+		return ret;
+
+	if(msgrcv_check(host_name, getuid(), getpid(), msqid) != 1) {
+		memset(buf, '\0', sizeof(struct msqid_ds));
+		buf = NULL;
+		return -1;
+	}
+
+	if(cmd == IPC_RMID)
+		remove_msgq_check(host_name, msqid);
 
 	return ret;
 }
