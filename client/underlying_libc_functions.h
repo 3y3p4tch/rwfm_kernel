@@ -3,6 +3,7 @@
 
 #include <dlfcn.h>
 #include <sys/socket.h>
+#include <signal.h>
 #include "preload.h"
 
 void *get_libc() {
@@ -27,6 +28,14 @@ int underlying_open(const char *pathname, int flags) {
         underlying = dlsym(get_libc(), "open");
     }
     return (*underlying)(pathname, flags);
+}
+
+FILE * underlying_fopen(const char *path, const char *mode) {
+	static FILE * (*underlying)(const char *pathname, const char *mode) = 0;
+    if (!underlying) {
+        underlying = dlsym(get_libc(), "fopen");
+    }
+    return (*underlying)(path, mode);
 }
 
 int underlying_read(int fd, void *buf, size_t count) {
@@ -155,6 +164,30 @@ int underlying_msgctl(int msqid, int cmd, struct msqid_ds *buf) {
         underlying = dlsym(get_libc(), "msgctl");
     }
     return (*underlying)(msqid, cmd, buf);
+}
+
+int underlying_kill(pid_t pid, int sig) {
+	static int (*underlying)(pid_t, int) = 0;
+    if (!underlying) {
+        underlying = dlsym(get_libc(), "kill");
+    }
+    return (*underlying)(pid, sig);
+}
+
+int underlying_sigqueue(pid_t pid, int sig, const union sigval value) {
+	static int (*underlying)(pid_t, int, const union sigval) = 0;
+    if (!underlying) {
+        underlying = dlsym(get_libc(), "sigqueue");
+    }
+    return (*underlying)(pid, sig, value);
+}
+
+int underlying_killpg(int pgrp, int sig) {
+	static int (*underlying)(int, int) = 0;
+    if (!underlying) {
+        underlying = dlsym(get_libc(), "killpg");
+    }
+    return (*underlying)(pgrp, sig);
 }
 
 #endif

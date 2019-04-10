@@ -405,4 +405,60 @@ int remove_msgq_check(char * host_name, int msgq_id) {
     return 1;
 }
 
+int kill_check(char * host_name, int uid, int pid, int peer_uid, int peer_pid) {
+	lock();
+	int ret_val = 0;
+	int host_id_index = get_host_index(host_name);
+
+    int sub_id_index = get_subject_id_index(host_id_index, uid, pid);
+	SUBJECT subject = get_subject(sub_id_index);
+
+	int peer_sub_id_index = get_subject_id_index(host_id_index, peer_uid, peer_pid);
+	SUBJECT peer_subject = get_subject(peer_sub_id_index);
+
+	if(is_user_in_set(peer_subject.owner, &subject.readers) == 1)
+	    ret_val = update_subject_label(peer_sub_id_index, set_intersection(&subject.readers, &peer_subject.readers), set_union(&subject.writers, &peer_subject.writers));
+	
+	unlock();
+
+	return ret_val;
+}
+
+int kill_many_check(char * host_name, int uid, int pid, char * peers) {
+	lock();
+	int ret_val = 1;
+	int host_id_index = get_host_index(host_name);
+
+    int sub_id_index = get_subject_id_index(host_id_index, uid, pid);
+	SUBJECT subject = get_subject(sub_id_index);
+
+	char **arguments = (char**)malloc(MAX_REQUEST_LENGTH * sizeof(char*));
+    int num_args = get_args_from_request(arguments, peers);
+
+	int * peer_sub_id_index = (int *)malloc((num_args/2) * sizeof(int));
+	SUBJECT * peer_subject = (SUBJECT *)malloc((num_args/2) * sizeof(SUBJECT));
+
+	for(int i=0;i<num_args;i+=2) {
+		peer_sub_id_index[i/2] = get_subject_id_index(host_id_index, strtol(arguments[i], NULL, 10), strtol(arguments[i+1], NULL, 10));
+		peer_subject[i/2] = get_subject(peer_sub_id_index[i/2]);
+
+		if(is_user_in_set(peer_subject[i/2].owner, &subject.readers) != 1) {
+			ret_val = 0;
+			break;
+		}
+	}
+
+	if(ret_val == 1) {
+		for(int i=0;i<num_args;i+=2) {
+			USER_SET new_readers = set_intersection(&subject.readers, &peer_subject[i/2].readers);
+			USER_SET new_writers = set_union(&subject.writers, &peer_subject[i/2].writers);
+			update_subject_label(peer_sub_id_index[i/2], new_readers, new_writers);
+		}
+	}
+	
+	unlock();
+
+	return ret_val;
+}
+
 #endif

@@ -11,6 +11,7 @@ the actual libc call for that function using the 'underlying_libc_functions.h'. 
 #include <dlfcn.h>
 #include <stdarg.h>
 #include "rule_engine.h"
+#include "signal_utils.h"
 
 void debuglog(char *log) {
     int logfd = underlying_open("/tmp/preload.log", 02000|02);
@@ -270,4 +271,119 @@ int close(int fd) {
 		pipe_close_check(host_name, getuid(), getpid(), &file_info);
 
     return underlying_close(fd);
+}
+
+int kill(pid_t pid, int sig) {
+	if(!is_rwfm_enabled())
+		return underlying_kill(pid, sig);
+
+	char host_name[1024];
+    sprintf(host_name, HOSTNAME);
+
+	char **cur_process_grp = NULL;
+	int n;
+
+    //If signalling a specific process
+    if(pid > 0) {
+		int peer_uid = get_uid_from_pid(pid);
+        if(peer_uid < 0)
+            return -1;
+        if(kill_check(host_name, getuid(), getpid(), peer_uid, pid) != 1)
+            return -1;
+        return underlying_kill(pid, sig);
+    } else if(pid == 0) { //If signalling current process group
+        n = get_group_pids_from_pid(getpid(), &cur_process_grp);
+	} else if(pid == -1) { //If signalling all processes for which signalling is permitted
+		n = get_all_permitted_pids_from_pid(getpid(), &cur_process_grp);
+	} else { //If signalling a specific process group
+		n = get_group_pids_from_pid(-pid, &cur_process_grp);
+	}
+
+	//If no other process in current process group then let it pass
+    if(n<=0)
+        return underlying_kill(pid, sig);
+
+	//If only one other process, then same sematics as signalling single process
+    if(n==1) {
+		if(kill_check(host_name, getuid(), getpid(), get_uid_from_pid(strtol(cur_process_grp[0], NULL, 10)), strtol(cur_process_grp[0], NULL, 10)) != 1) {
+			free(cur_process_grp[0]);
+            free(cur_process_grp);
+	        return -1;
+		}
+		free(cur_process_grp[0]);
+        free(cur_process_grp);
+
+	    return underlying_kill(pid, sig);
+	}
+
+	//If signalling multiple processes, then check semantics for each process to be signalled
+	char peers[MAX_REQUEST_LENGTH];
+    peers[0] = '\0';
+    for(int i=0;i<n;i++) {
+        sprintf(peers + strlen(peers), "%d %s ", get_uid_from_pid(strtol(cur_process_grp[i], NULL, 10)), cur_process_grp[i]);
+        free(cur_process_grp[i]);
+    }
+    free(cur_process_grp);
+
+    if(kill_many_check(host_name, getuid(), getpid(), peers) != 1)
+        return -1;
+
+    return underlying_kill(pid, sig);
+}
+
+int sigqueue(pid_t pid, int sig, const union sigval value) {
+	if(!is_rwfm_enabled())
+		return underlying_sigqueue(pid, sig, value);
+
+	char host_name[1024];
+    sprintf(host_name, HOSTNAME);
+
+	int peer_uid = get_uid_from_pid(pid);
+    if(peer_uid < 0)
+        return -1;
+    if(kill_check(host_name, getuid(), getpid(), peer_uid, pid) != 1)
+        return -1;
+
+    return underlying_sigqueue(pid, sig, value);
+}
+
+int killpg(int pgrp, int sig) {
+	if(!is_rwfm_enabled())
+		return underlying_killpg(pgrp, sig);
+
+	char host_name[1024];
+    sprintf(host_name, HOSTNAME);
+
+    char **cur_process_grp = NULL;
+    int n = get_group_pids_from_pid(-pgrp, &cur_process_grp);
+	//If no other process permitted then let it pass
+    if(n<=0)
+        return underlying_killpg(pgrp, sig);
+
+	//If only one other process, then same sematics as signalling single process
+    if(n==1) {
+		if(kill_check(host_name, getuid(), getpid(), get_uid_from_pid(strtol(cur_process_grp[0], NULL, 10)), strtol(cur_process_grp[0], NULL, 10)) != 1) {
+			free(cur_process_grp[0]);
+            free(cur_process_grp);
+	        return -1;
+		}
+		free(cur_process_grp[0]);
+        free(cur_process_grp);
+
+	    return underlying_killpg(pgrp, sig);
+    }
+
+	//If signalling multiple processes, then check rwfm semantics for each process to be signalled
+	char peers[MAX_REQUEST_LENGTH];
+    peers[0] = '\0';
+    for(int i=0;i<n;i++) {
+        sprintf(peers + strlen(peers), "%d %s ", get_uid_from_pid(strtol(cur_process_grp[i], NULL, 10)), cur_process_grp[i]);
+        free(cur_process_grp[i]);
+    }
+    free(cur_process_grp);
+
+    if(kill_many_check(host_name, getuid(), getpid(), peers) != 1)
+        return -1;
+
+    return underlying_killpg(pgrp, sig);
 }
