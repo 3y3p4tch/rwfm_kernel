@@ -612,8 +612,9 @@ int do_operation(int operation, char **req_args, int num_args, long pid) {
         default:
             return -2;
     }
-
-	printf("Operation response %d : %s\n",operation,response.msg.msg_str);
+    #ifdef DEBUG
+	    printf("Operation response %d : %s\n",operation,response.msg.msg_str);
+    #endif
 
     return 0;
 }
@@ -627,12 +628,16 @@ int start_server() {
 			perror("Stopping database server due to error in read");
 			return -1;
 		}
-        printf("Received request of type %s with args:%s\n", get_request_msg(request.msg.msg_type), request.msg.msg_str);
+        #ifdef DEBUG
+            printf("Received request of type %s with args:%s\n", get_request_msg(request.msg.msg_type), request.msg.msg_str);
+        #endif
         char **req_args = (char**)malloc(MAX_REQUEST_LENGTH * sizeof(char*));
         int num_args = get_args_from_request(req_args, request.msg.msg_str);
         int operation = request.msg.msg_type;
         int ret = do_operation(operation, req_args, num_args, request.pid);
-        printf("Operation result:%d\n\n",ret);
+        #ifdef DEBUG
+            printf("Operation result:%d\n\n",ret);
+        #endif
         if(ret!=0) {
 			printf("Stopping database server!\n\n");
 			key_t key = ftok(MQ_FILE_PATH, RESPONSE_MQ_PROJ_ID);

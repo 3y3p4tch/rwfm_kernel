@@ -7,7 +7,7 @@
 #include <fcntl.h>
 #include <sys/time.h>
 
-#define CHUNK_SIZE 32000
+#define CHUNK_SIZE 16000
 
 #define FILE_SIZE 10000000
 
@@ -24,7 +24,7 @@ int main()
         {
             char t[9];
             sprintf(t,"%ld", random());
-            t[9]='\0';
+            t[8]='\0';
             strcat(c,t);
         }
         write(fd, c, CHUNK_SIZE);
