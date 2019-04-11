@@ -52,6 +52,9 @@ PIPE_REF_MAP * pipe_ref_map = NULL;
 int num_msgq_objects = 0;
 MSGQ_OBJECT * all_msgq_objects = NULL;
 
+int num_sem_objects = 0;
+SEM_OBJECT * all_sem_objects = NULL;
+
 int read_request(MQ_BUFFER *req_buff) {
 	key_t key = ftok(MQ_FILE_PATH, REQUEST_MQ_PROJ_ID);
 	int msgqid = msgget(key, 0666 | IPC_CREAT);
@@ -156,6 +159,14 @@ char * get_request_msg(int req_type) {
 		case GET_MSGQ_OBJECT_OP:
             return "GET_MSGQ_OBJECT_OP";
 		case REMOVE_MSGQ_OBJECT_OP:
+            return "REMOVE_MSGQ_OBJECT_OP";
+		case ADD_SEM_OBJECT_OP:
+            return "ADD_MSGQ_OBJECT_OP";
+		case GET_SEM_OBJECT_INDEX_OP:
+            return "GET_MSGQ_OBJECT_INDEX_OP";
+		case GET_SEM_OBJECT_OP:
+            return "GET_MSGQ_OBJECT_OP";
+		case REMOVE_SEM_OBJECT_OP:
             return "REMOVE_MSGQ_OBJECT_OP";
         case COPY_SUBJECT_FDS_OP:
             return "COPY_SUBJECT_FDS_OP";
@@ -650,6 +661,57 @@ int do_operation(int operation, char **req_args, int num_args, long pid) {
 			int msgq_id = strtol(req_args[1], NULL, 10);
 			response.msg.msg_type = REMOVE_MSGQ_OBJECT_OP;
 			sprintf(response.msg.msg_str, "%d", remove_msgq_object(host_index, msgq_id));
+            write_response(&response);
+			break;
+		}
+
+
+		case ADD_SEM_OBJECT_OP:
+        {
+            if(num_args != 5)
+                return -1;
+            SEM_OBJECT object_add;
+            object_add.host_index = strtol(req_args[0], NULL, 10);
+            object_add.sem_id = strtol(req_args[1], NULL, 10);
+            object_add.owner = strtol(req_args[2], NULL, 10);
+            object_add.readers = strtoull(req_args[3], NULL, 16);
+            object_add.writers = strtoull(req_args[4], NULL, 16);
+            response.msg.msg_type = ADD_SEM_OBJECT_OP;
+			sprintf(response.msg.msg_str, "%d", add_sem_object(object_add));
+            write_response(&response);
+            break;
+        }
+		case GET_SEM_OBJECT_INDEX_OP:
+		{
+			if(num_args != 2)
+                return -1;
+			int host_index = strtol(req_args[0], NULL, 10);
+			int sem_id = strtol(req_args[1], NULL, 10);
+			response.msg.msg_type = GET_SEM_OBJECT_INDEX_OP;
+			sprintf(response.msg.msg_str, "%d", get_sem_object_index(host_index, sem_id));
+            write_response(&response);
+			break;
+		}
+		case GET_SEM_OBJECT_OP:
+		{
+			if(num_args != 2)
+                return -1;
+			int host_index = strtol(req_args[0], NULL, 10);
+			int sem_id = strtol(req_args[1], NULL, 10);
+			SEM_OBJECT sem_object = all_sem_objects[get_sem_object_index(host_index, sem_id)];
+			response.msg.msg_type = GET_SEM_OBJECT_OP;
+			sprintf(response.msg.msg_str, "%d %llx %llx", sem_object.owner, sem_object.readers, sem_object.writers);
+            write_response(&response);
+			break;
+		}
+		case REMOVE_SEM_OBJECT_OP:
+		{
+			if(num_args != 2)
+                return -1;
+			int host_index = strtol(req_args[0], NULL, 10);
+			int sem_id = strtol(req_args[1], NULL, 10);
+			response.msg.msg_type = REMOVE_SEM_OBJECT_OP;
+			sprintf(response.msg.msg_str, "%d", remove_sem_object(host_index, sem_id));
             write_response(&response);
 			break;
 		}

@@ -107,4 +107,51 @@ int infer_msgq_labels(MSGQ_OBJECT * msgq_object, struct msqid_ds * msgq_info, in
     return 0;       
 }
 
+int infer_sem_labels(SEM_OBJECT * sem_object, struct semid_ds * sem_info, int host_id_index) {
+    int user_id_index = get_user_id_index(host_id_index, sem_info->sem_perm.uid);
+	sem_object->readers = 0;
+	sem_object->writers = 0;
+
+	int is_user_reader = sem_info->sem_perm.mode & S_IRUSR ? 1 : 0;
+    int is_user_writer = sem_info->sem_perm.mode & S_IWUSR ? 1 : 0;
+
+    if(user_id_index==-1)
+        return -1;
+    
+    if(is_user_reader)
+        add_user_to_label(user_id_index, &(sem_object->readers));
+
+    if(is_user_writer)
+        add_user_to_label(user_id_index, &(sem_object->writers));
+
+    int group_id_index = get_group_id_index(host_id_index, sem_info->sem_perm.gid);    
+    USER_SET group_members = get_members_from_group_id(group_id_index);
+    
+    if(sem_info->sem_perm.mode & S_IRGRP)
+        sem_object->readers |= group_members;
+
+    if(sem_info->sem_perm.mode & S_IWGRP)
+        sem_object->writers |= group_members; 
+
+    if(!is_user_reader)
+        remove_user_from_set(user_id_index, &(sem_object->readers));
+    
+    if(!is_user_writer)
+        remove_user_from_set(user_id_index, &(sem_object->writers));
+    
+    int number_of_users = get_number_of_users();
+    USER_SET all_users = get_all_users(number_of_users);
+
+    USER_SET other_members = all_users & (~group_members);
+    remove_user_from_set(user_id_index, &other_members);
+    
+    if(sem_info->sem_perm.mode & S_IROTH)
+        sem_object->readers |= other_members;
+
+    if(sem_info->sem_perm.mode & S_IWOTH)
+        sem_object->writers |= other_members;
+
+    return 0;       
+}
+
 #endif

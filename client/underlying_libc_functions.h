@@ -4,6 +4,7 @@
 #include <dlfcn.h>
 #include <sys/socket.h>
 #include <signal.h>
+#include "database_model.h"
 #include "preload.h"
 
 void *get_libc() {
@@ -164,6 +165,38 @@ int underlying_msgctl(int msqid, int cmd, struct msqid_ds *buf) {
         underlying = dlsym(get_libc(), "msgctl");
     }
     return (*underlying)(msqid, cmd, buf);
+}
+
+int underlying_semget(key_t key, int nsems, int semflg) {
+	static int (*underlying)(key_t, int, int) = 0;
+    if (!underlying) {
+        underlying = dlsym(get_libc(), "semget");
+    }
+    return (*underlying)(key, nsems, semflg);
+}
+
+int underlying_semop(int semid, struct sembuf *sops, size_t nsops) {
+	static int (*underlying)(int, struct sembuf *, size_t) = 0;
+    if (!underlying) {
+        underlying = dlsym(get_libc(), "semop");
+    }
+    return (*underlying)(semid, sops, nsops);
+}
+
+int underlying_semctl(int semid, int semnum, int cmd) {
+	static int (*underlying)(int, int, int) = 0;
+    if (!underlying) {
+        underlying = dlsym(get_libc(), "semctl");
+    }
+    return (*underlying)(semid, semnum, cmd);
+}
+
+int underlying_semctl_multiarg(int semid, int semnum, int cmd, union semun arg) {
+	static int (*underlying)(int, int, int, union semun) = 0;
+    if (!underlying) {
+        underlying = dlsym(get_libc(), "semctl");
+    }
+    return (*underlying)(semid, semnum, cmd, arg);
 }
 
 int underlying_kill(pid_t pid, int sig) {

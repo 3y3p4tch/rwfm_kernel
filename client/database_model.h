@@ -95,4 +95,32 @@ typedef struct msgq_object {
     USER_SET writers;
 } MSGQ_OBJECT;
 
+typedef struct sem_object {
+	uint host_index;
+	uint sem_id;
+    uint owner;
+    USER_SET readers;
+    USER_SET writers;
+} SEM_OBJECT;
+
+struct semid_ds {
+    struct ipc_perm sem_perm;  /* Ownership and permissions */
+    time_t          sem_otime; /* Last semop time */
+    time_t          sem_ctime; /* Last change time */
+    unsigned long   sem_nsems; /* No. of semaphores in set */
+};
+
+struct sembuf {
+	unsigned short  sem_num;	/* semaphore index in array */
+	short		sem_op;		/* semaphore operation */
+	short		sem_flg;	/* operation flags */
+};
+
+union semun {
+	int              val;    /* Value for SETVAL */
+    struct semid_ds *buf;    /* Buffer for IPC_STAT, IPC_SET */
+    unsigned short  *array;  /* Array for GETALL, SETALL */
+    struct seminfo  *__buf;  /* Buffer for IPC_INFO */
+};
+
 #endif

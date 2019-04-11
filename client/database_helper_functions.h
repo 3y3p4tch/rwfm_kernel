@@ -446,6 +446,37 @@ int remove_msgq_object(int host_index, int msgq_id) {
 }
 
 
+extern int num_sem_objects;
+extern SEM_OBJECT * all_sem_objects;
+
+int add_sem_object(SEM_OBJECT sem_object) {
+	all_sem_objects = (SEM_OBJECT *)realloc(all_sem_objects, (num_sem_objects+1) * sizeof(SEM_OBJECT));
+    all_sem_objects[num_sem_objects] = sem_object;
+
+    return num_sem_objects++;
+}
+
+int get_sem_object_index(int host_index, int sem_id) {
+	for(int i=0;i<num_sem_objects;i++) {
+		if(all_sem_objects[i].host_index == host_index && all_sem_objects[i].sem_id == sem_id)
+			return i;
+	}
+
+	return -1;
+}
+
+int remove_sem_object(int host_index, int sem_id) {
+	int sem_index = get_sem_object_index(host_index, sem_id);
+	if(sem_index == -1)
+		return -1;
+	for(int i=sem_index;i<num_sem_objects-1;i++)
+        all_sem_objects[i] = all_sem_objects[i+1];
+    all_sem_objects = (SEM_OBJECT *)realloc(all_sem_objects, (--num_sem_objects) * sizeof(SEM_OBJECT));
+
+	return num_sem_objects;
+}
+
+
 /*
 Description :   Copy all the information contained in source subject id to destination subject id.
                 The information include all the fds (file, pipe, socket, etc) opened by the source.

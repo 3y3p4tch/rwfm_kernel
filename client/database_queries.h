@@ -464,6 +464,53 @@ int remove_msgq_object(int host_id_index, int msgq_id) {
 }
 
 
+int add_sem_object(int host_id_index, int sem_id, int owner, USER_SET readers, USER_SET writers) {
+	MQ_BUFFER request, response;
+	request.msg.msg_type = ADD_SEM_OBJECT_OP;
+    sprintf(request.msg.msg_str, "%d %d %d %llx %llx", host_id_index, sem_id, owner, readers, writers);
+    write_request(&request);
+    read_response(&response);
+	
+    return strtol(response.msg.msg_str, NULL, 10);
+}
+
+int get_sem_object_index(int host_id_index, int sem_id) {
+	MQ_BUFFER request, response;
+	request.msg.msg_type = GET_SEM_OBJECT_INDEX_OP;
+    sprintf(request.msg.msg_str, "%d %d", host_id_index, sem_id);
+    write_request(&request);
+    read_response(&response);
+	
+    return strtol(response.msg.msg_str, NULL, 10);
+}
+
+SEM_OBJECT get_sem_object(int host_id_index, int sem_id) {
+	MQ_BUFFER request, response;
+	request.msg.msg_type = GET_SEM_OBJECT_OP;
+    sprintf(request.msg.msg_str, "%d %d", host_id_index, sem_id);
+    write_request(&request);
+    read_response(&response);
+	char **arguments = (char**)malloc(MAX_REQUEST_LENGTH * sizeof(char*));
+    get_args_from_request(arguments, response.msg.msg_str);
+    SEM_OBJECT sem_obj;
+	sem_obj.owner = strtol(arguments[0], NULL, 10);
+    sem_obj.readers = strtoull(arguments[1], NULL, 16);
+    sem_obj.writers = strtoull(arguments[2], NULL, 16);
+
+    return sem_obj;
+}
+
+int remove_sem_object(int host_id_index, int sem_id) {
+	MQ_BUFFER request, response;
+	request.msg.msg_type = REMOVE_SEM_OBJECT_OP;
+    sprintf(request.msg.msg_str, "%d %d", host_id_index, sem_id);
+    write_request(&request);
+    read_response(&response);
+	
+    return strtol(response.msg.msg_str, NULL, 10);
+}
+
+
 int copy_subject_info(int src_sub_id_index, int dstn_sub_id_index) {
     MQ_BUFFER request, response;
 	request.msg.msg_type = COPY_SUBJECT_FDS_OP;

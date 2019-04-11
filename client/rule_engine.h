@@ -405,6 +405,74 @@ int remove_msgq_check(char * host_name, int msgq_id) {
     return 1;
 }
 
+int create_sem_check(char * host_name, int sem_id) {
+	lock();
+    int host_id_index = get_host_index(host_name);
+    int sem_object_index = get_sem_object_index(host_id_index, sem_id);
+    
+	if(sem_object_index == -1) {
+		union semun sem_arg;
+		underlying_semctl_multiarg(sem_id, 0, IPC_STAT, sem_arg);
+
+        SEM_OBJECT sem_object;
+        sem_object.host_index = host_id_index;
+        sem_object.sem_id = sem_id;
+        sem_object.owner = get_user_id_index(host_id_index, sem_arg.buf->sem_perm.uid);
+        infer_sem_labels(&sem_object, sem_arg.buf, host_id_index);
+
+        add_sem_object(host_id_index, sem_id, sem_object.owner, sem_object.readers, sem_object.writers);
+    }
+	unlock();
+
+    return 1;
+}
+
+int sem_read_check(char * host_name, int uid, int pid, int sem_id) {
+	lock();
+    int host_id_index = get_host_index(host_name);
+    int sub_id_index = get_subject_id_index(host_id_index, uid, pid);
+	SUBJECT subject = get_subject(sub_id_index);
+
+    SEM_OBJECT sem_object = get_sem_object(host_id_index, sem_id);
+	int ret_val = 0;
+
+	if(is_user_in_set(subject.owner, &sem_object.readers) == 1)
+	    ret_val = update_subject_label(sub_id_index, set_intersection(&subject.readers, &sem_object.readers), set_union(&subject.writers, &sem_object.writers));
+	unlock();
+
+    return ret_val;
+}
+
+int sem_write_check(char * host_name, int uid, int pid, int sem_id) {
+	lock();
+    int host_id_index = get_host_index(host_name);
+    int sub_id_index = get_subject_id_index(host_id_index, uid, pid);
+	SUBJECT subject = get_subject(sub_id_index);
+
+    SEM_OBJECT sem_object = get_sem_object(host_id_index, sem_id);
+	int ret_val = 0;
+
+	if(is_user_in_set(subject.owner, &sem_object.writers)
+		    && is_superset_of(&subject.readers, &sem_object.readers)
+		    && is_subset_of(&subject.writers, &sem_object.writers))
+	    ret_val = 1;
+	unlock();
+
+    return ret_val;
+}
+
+int remove_sem_check(char * host_name, int sem_id) {
+	lock();
+    int host_id_index = get_host_index(host_name);
+    int sem_object_index = get_sem_object_index(host_id_index, sem_id);
+    
+	if(sem_object_index != -1)
+        remove_sem_object(host_id_index, sem_id);
+	unlock();
+
+    return 1;
+}
+
 int kill_check(char * host_name, int uid, int pid, int peer_uid, int peer_pid) {
 	lock();
 	int ret_val = 0;

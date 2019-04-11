@@ -255,6 +255,68 @@ int msgctl(int msqid, int cmd, struct msqid_ds *buf) {
 	return ret;
 }
 
+int semget(key_t key, int nsems, int semflg) {
+	char host_name[1024];
+    sprintf(host_name, HOSTNAME);
+
+	int ret = underlying_semget(key, nsems, semflg);
+
+	if(!is_rwfm_enabled() || ret == -1) {
+		return ret;
+	}
+
+	if(create_sem_check(host_name, ret) != 1) {
+		return -1;
+	}
+
+	return ret;
+}
+
+int semop(int semid, struct sembuf *sops, size_t nsops) {
+	char host_name[1024];
+    sprintf(host_name, HOSTNAME);
+
+	int rd_op=0, wr_op=0;
+	for(int i=0;i<nsops;i++) {
+		if(sops->sem_op > 0)
+			wr_op = 1;
+		else if(sops->sem_op == 0)
+			rd_op = 1;
+		else {
+			rd_op = 1;
+			wr_op = 1;
+			break;
+		}
+	}
+
+	int ret_val = -1;
+
+	if(rd_op == 1 && sem_read_check(host_name, getuid(), getpid(), semid) == 1)
+		ret_val = 1;
+	if(wr_op == 1 && sem_write_check(host_name, getuid(), getpid(), semid) == 1)
+		ret_val = 1;
+
+	if(ret_val == 1)
+		return underlying_semop(semid, sops, nsops);
+	else
+		return -1;
+}
+
+int semctl(int semid, int semnum, int cmd) {
+	char host_name[1024];
+    sprintf(host_name, HOSTNAME);
+
+	ssize_t ret = underlying_semctl(semid, semnum, cmd);
+
+	if(!is_rwfm_enabled() || ret == -1)
+		return ret;
+
+	if(cmd == IPC_RMID)
+		remove_sem_check(host_name, semid);
+
+	return ret;
+}
+
 int close(int fd) {
 	if(!is_rwfm_enabled())
 		return underlying_close(fd);
