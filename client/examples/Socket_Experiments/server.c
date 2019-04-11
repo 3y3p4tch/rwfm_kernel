@@ -11,12 +11,11 @@
 #include <stdlib.h>
 #include <sys/time.h>
 
-#define CHUNK_SIZE 16000
-
 #define DATA_SIZE 10000000
 
-int main()
+int main(int argc, char *argv[])
 {
+    const int CHUNK_SIZE = atoi(argv[1]);
 	int listen_sockfd, connection_sockfd, n;
 	struct sockaddr_in server_addr, client_addr;
 	char buff[CHUNK_SIZE];
@@ -45,8 +44,8 @@ int main()
 
 	connection_sockfd = accept(listen_sockfd, (struct sockaddr *) &client_addr, &client_addr_sz);
     
-    struct timeval start, end;
-    gettimeofday(&start, NULL);
+    struct timeval time;
+    gettimeofday(&time, NULL);
 
     for(n=0;n<(DATA_SIZE/CHUNK_SIZE);n++)
     {
@@ -61,11 +60,8 @@ int main()
         ret = send(connection_sockfd,buff,sizeof buff, 0);
     }
 
-    gettimeofday(&end, NULL);
-    unsigned long long t1 = 1000 * (end.tv_sec - start.tv_sec) + (end.tv_usec - start.tv_usec)/1000;
-    unsigned long long t2 = 1000000 * (end.tv_sec - start.tv_sec) + (end.tv_usec - start.tv_usec);
-    printf("Time taken server write: %llu millisec\n",t1);
-    printf("Time taken server write: %llu microsec\n",t2);
+    printf("Time taken server write: %ld sec\n",time.tv_sec);
+    printf("Time taken server write: %ld microsec\n",time.tv_usec);
     
 	close(connection_sockfd);
 	close(listen_sockfd);

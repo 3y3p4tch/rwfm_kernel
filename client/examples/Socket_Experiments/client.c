@@ -11,10 +11,9 @@
 #include <stdlib.h>
 #include <sys/time.h>
 
-#define CHUNK_SIZE 16000
-
 int main(int argc, char *argv[])
 {
+    const int CHUNK_SIZE = atoi(argv[2]);
 	int sockfd;
 	struct sockaddr_in server_addr;
 	char buff[CHUNK_SIZE];
@@ -29,16 +28,13 @@ int main(int argc, char *argv[])
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	int ret = connect(sockfd, (struct sockaddr *) &server_addr, server_addr_sz);
     
-    struct timeval start, end;
-    gettimeofday(&start, NULL);
+    struct timeval time;
 
     while((ret = recv(sockfd, buff, CHUNK_SIZE, 0))>0);
 
-    gettimeofday(&end, NULL);
-    unsigned long long t1 = 1000 * (end.tv_sec - start.tv_sec) + (end.tv_usec - start.tv_usec)/1000;
-    unsigned long long t2 = 1000000 * (end.tv_sec - start.tv_sec) + (end.tv_usec - start.tv_usec);
-    printf("Time taken client read: %llu millisec\n",t1);
-    printf("Time taken client read: %llu microsec\n",t2);
+    gettimeofday(&time, NULL);
+    printf("Time taken client read: %ld sec\n",time.tv_sec);
+    printf("Time taken client read: %ld microsec\n",time.tv_usec);
 
 	close(sockfd);
 

@@ -7,10 +7,9 @@
 #include <fcntl.h>
 #include <sys/time.h>
 
-#define CHUNK_SIZE 16000
-
-int main()
+int main(int argc, char *argv[])
 {
+    const int CHUNK_SIZE = atoi(argv[1]);
     int m, fd = open("temp_file", O_RDONLY);
     char c[CHUNK_SIZE];
     struct timeval start, end;

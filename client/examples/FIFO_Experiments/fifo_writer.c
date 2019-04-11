@@ -7,11 +7,11 @@
 #include <stdlib.h>
 #include <sys/time.h>
 
-#define CHUNK_SIZE 16000
-
 #define DATA_SIZE 10000000
 
-int main() {
+int main(int argc, char *argv[])
+{
+    const int CHUNK_SIZE = atoi(argv[1]);
     char buff[CHUNK_SIZE];
     int n;
     struct timeval time;
@@ -41,9 +41,8 @@ int main() {
         write(fifofd, buff, CHUNK_SIZE);
     }
 
-    gettimeofday(&time, NULL);
-    printf("Time taken fifo read: %llu sec\n",time.tv_sec);
-    printf("Time taken fifo read: %llu microsec\n",time.tv_usec);
+    printf("Time taken fifo write: %ld sec\n",time.tv_sec);
+    printf("Time taken fifo write: %ld microsec\n",time.tv_usec);
 
     close(fifofd);
 
