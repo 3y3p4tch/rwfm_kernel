@@ -7,12 +7,11 @@
 #include <fcntl.h>
 #include <sys/time.h>
 
-#define CHUNK_SIZE 32000
-
 #define FILE_SIZE 10000000
 
-int main()
+int main(int argc, char *argv[])
 {
+    const int CHUNK_SIZE = atoi(argv[1]);
     int n, fd = open("temp_file", O_WRONLY);
     char c[2*CHUNK_SIZE];
     struct timeval start, end;
@@ -24,7 +23,7 @@ int main()
         {
             char t[9];
             sprintf(t,"%ld", random());
-            t[9]='\0';
+            t[8]='\0';
             strcat(c,t);
         }
         write(fd, c, CHUNK_SIZE);
