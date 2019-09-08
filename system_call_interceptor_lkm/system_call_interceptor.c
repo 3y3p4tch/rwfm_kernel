@@ -1126,7 +1126,6 @@ static void replace_syscalls(void)
     original_open = (void *)syscall_table[__NR_open];
     original_read = (void *)syscall_table[__NR_read];
     original_write = (void *)syscall_table[__NR_write];
-//    getuid_call = (void *)sys_call_table[__NR_getuid];
 
     syscall_table[__NR_clone] = (unsigned long *)rwfm_clone;
     syscall_table[__NR_open] = (unsigned long *)rwfm_open;
