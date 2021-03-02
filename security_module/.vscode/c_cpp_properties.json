@@ -1,0 +1,33 @@
+{
+    "env": {
+        // This represents path of your linux kernel source code
+        // "/lib/modules/$(uname -r)/build" can also be used
+        "linux_kernel_path": "/lib/modules/5.8.0-44-generic/build",
+        "arch": "x86"
+    },
+    "configurations": [
+        {
+            "name": "Kernel Development",
+            "includePath": [
+                "${workspaceFolder}",
+                "${linux_kernel_path}/arch/${arch}/include",
+                "${linux_kernel_path}/arch/${arch}/include/generated",
+                "${linux_kernel_path}/include",
+                "${linux_kernel_path}/arch/${arch}/include/uapi",
+                "${linux_kernel_path}/arch/${arch}/include/generated/uapi",
+                "${linux_kernel_path}/include/uapi",
+                "${linux_kernel_path}/include/generated/uapi"
+            ],
+            "forcedInclude": [
+                "${linux_kernel_path}/include/linux/kconfig.h"
+            ],
+            "defines": [
+                "__GNUC__",
+                "__KERNEL__"
+            ],
+            "cStandard": "gnu99",
+            "intelliSenseMode": "linux-gcc-x64"
+        }
+    ],
+    "version": 4
+}

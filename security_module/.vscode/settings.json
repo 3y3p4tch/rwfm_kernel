@@ -1,0 +1,13 @@
+{
+    "[c]": {
+        "editor.detectIndentation": false,
+        "editor.tabSize": 8,
+        "editor.insertSpaces": false,
+        "editor.rulers": [80]
+    },
+    "files.associations": {
+        "*.h": "c"
+    },
+    "C_Cpp.clang_format_style": "file",
+    "C_Cpp.default.systemIncludePath": []
+}
